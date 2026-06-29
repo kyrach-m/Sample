@@ -1,5 +1,10 @@
 # **Android 商业级架构框架 — 技术白皮书**
 
+![Kotlin](https://img.shields.io/badge/Kotlin-2.0.20-blue)
+![Android](https://img.shields.io/badge/Android-API%2024%2B-green)
+![License](https://img.shields.io/badge/License-Apache%202.0-orange)
+![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)
+
 > **版本**：v1.0.0\
 > **技术栈**：Kotlin 2.0 + KSP + Jetpack + 模块化架构\
 > **定位**：一套开箱即用的 Android 大厂级基础架构脚手架
@@ -20,6 +25,19 @@
 - 后续规划
 
 ***
+
+## 🚀 快速开始
+
+```bash
+# 1. 克隆项目
+git clone https://github.com/kyrach-m/Sample.git
+
+# 2. 打开 Android Studio，等待 Gradle Sync 完成
+
+# 3. 修改 local.properties 中的 sdk.dir 路径
+
+# 4. 运行 app 模块，查看 Dashboard 能力展示页
+```
 
 ## **项目概述**
 
@@ -65,7 +83,7 @@
 
 **Release APK 大小**
 
-\~19MB（可优化至 12MB）
+（已优化至 9.5MB）
 
 已开启混淆 + 资源压缩
 
