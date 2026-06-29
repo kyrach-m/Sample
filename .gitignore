@@ -1,0 +1,81 @@
+# =============================================
+# 1. Android Studio / IDE 相关
+# =============================================
+*.iml
+*.iws
+*.ipr
+.idea/
+.gradle/
+.classpath
+.project
+.settings/
+.vscode/
+.cxx/
+*.hprof
+*.pyc
+
+# =============================================
+# 2. 构建输出与缓存（核心）
+# =============================================
+build/
+*/build/
+app/build/
+core/*/build/
+features/*/build/
+service/*/build/
+middleware/*/build/
+
+# 本地构建缓存
+captures/
+.externalNativeBuild/
+*.apk
+*.aab
+*.dex
+*.class
+*.jar
+*.war
+*.ear
+
+# =============================================
+# 3. 本地环境配置（极其重要，含 SDK/密钥）
+# =============================================
+local.properties
+gradle.properties.local
+keystore.properties
+*.jks
+*.keystore
+*.key
+
+# =============================================
+# 4. 系统文件（Mac / Windows / Linux）
+# =============================================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*.log
+*.tmp
+*.temp
+
+# =============================================
+# 5. 依赖锁文件（视情况保留）
+# =============================================
+# 如果你使用 Gradle Versions Catalog，保留 libs.versions.toml
+# 但不保留 gradle-wrapper.jar 的本地缓存，只保留 properties
+# 注意：gradle-wrapper.jar 必须提交，否则别人无法构建
+gradle/wrapper/gradle-wrapper.properties
+# 但保留 gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# =============================================
+# 6. 性能与调试
+# =============================================
+*.trace
+*.hprof
+dump/
+logs/
+
+# =============================================
+# 7. KSP / KAPT 生成代码（已在 build 内，无需单独排除）
+# =============================================
+# 但如果生成在 src/main 下，需手动排除，不过标准 KSP 生成在 build 内，已覆盖
