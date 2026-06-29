@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    闪屏页背景 drawable
+    
+    使用 layer-list 绘制品牌 Logo + 背景色。
+    禁止使用布局文件作为 windowBackground，避免布局解析耗时。
+    
+    注意：不使用 <bitmap> 标签，因为自适应图标（adaptive icon）
+    在 API 26+ 是 XML 文件，无法被 <bitmap> 解析，会导致 Resources$NotFoundException。
+    使用 <item drawable="..."> 直接引用，让系统自行处理渲染。
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 背景色 -->
+    <item android:drawable="@color/splash_background" />
+
+    <!-- 品牌 Logo（居中，使用 drawable 引用而非 bitmap，兼容自适应图标） -->
+    <item
+        android:drawable="@mipmap/ic_launcher"
+        android:gravity="center"
+        android:width="120dp"
+        android:height="120dp" />
+
+</layer-list>

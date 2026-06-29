@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Sample</string>
+
+    <string name="framework_ready_title">框架已就绪</string>
+    <string name="framework_ready_subtitle">Android 商业级架构框架</string>
+
+    <string name="framework_core_modules">base | network | storage | cache | common | ui</string>
+    <string name="framework_service_modules">startup | logger | crash</string>
+    <string name="framework_middleware_modules">router | permission</string>
+    <string name="framework_all_ready">所有模块初始化成功</string>
+</resources>

@@ -1,0 +1,71 @@
+# ART Baseline Profile
+# Format: [HSP]Lpackage/ClassName;->methodName(parameterTypes)returnType
+# H = Hot, S = Startup, P = Post-startup
+
+# ============================================================
+# 1. Application Startup (S = Startup)
+# ============================================================
+HSLcom/ch/sample/BaseApplication;-><init>()V
+HSLcom/ch/sample/BaseApplication;->onCreate()V
+
+# ============================================================
+# 2. Network Client (HSP = Hot + Startup + Post-startup)
+# ============================================================
+HSPLcom/ch/core/network/client/NetworkClient;-><clinit>()V
+HSPLcom/ch/core/network/client/NetworkClient;->init(Landroid/app/Application;Ljava/lang/String;)V
+
+# ============================================================
+# 3. KV Storage (HSP = Hot + Startup + Post-startup)
+# ============================================================
+HSPLcom/ch/core/storage/kv/KVStorage;-><clinit>()V
+HSPLcom/ch/core/storage/kv/KVStorage;->init(Landroid/content/Context;)V
+HSPLcom/ch/core/storage/kv/KVStorage;->putString(Ljava/lang/String;Ljava/lang/String;Lcom/ch/core/storage/kv/KVStorage$Scope;)V
+HSPLcom/ch/core/storage/kv/KVStorage;->getString(Ljava/lang/String;Ljava/lang/String;Lcom/ch/core/storage/kv/KVStorage$Scope;)Ljava/lang/String;
+HSPLcom/ch/core/storage/kv/KVStorage;->remove(Ljava/lang/String;Lcom/ch/core/storage/kv/KVStorage$Scope;)V
+HSPLcom/ch/core/storage/kv/KVStorage;->clear(Lcom/ch/core/storage/kv/KVStorage$Scope;)V
+
+# ============================================================
+# 4. Splash Activity (S = Startup)
+# ============================================================
+HSLcom/ch/sample/splash/SplashActivity;-><init>()V
+HSLcom/ch/sample/splash/SplashActivity;->onCreate(Landroid/os/Bundle;)V
+HSLcom/ch/sample/splash/SplashActivity;->navigateToDestination()V
+
+# ============================================================
+# 5. Router (HSP = Hot + Startup + Post-startup)
+# ============================================================
+HSPLcom/ch/middleware/router/RouterHelper;-><clinit>()V
+HSPLcom/ch/middleware/router/RouterHelper;->init(Landroid/content/Context;)V
+HSPLcom/ch/middleware/router/RouterHelper;->navigate(Ljava/lang/String;)V
+HSPLcom/ch/middleware/router/RouterHelper;->getService(Ljava/lang/Class;)Ljava/lang/Object;
+
+# ============================================================
+# 6. KSP Generated Router Init (S = Startup)
+# ============================================================
+HSLcom/ch/middleware/router/generated/GeneratedRouterInit;->registerRoutes()V
+
+# ============================================================
+# 7. Main Activity (P = Post-startup)
+# ============================================================
+HPLcom/ch/sample/MainActivity;-><init>()V
+HPLcom/ch/sample/MainActivity;->onCreate(Landroid/os/Bundle;)V
+
+# ============================================================
+# 8. Core Base Classes (HSP = Hot + Startup + Post-startup)
+# ============================================================
+HSPLcom/ch/core/base/BaseActivity;-><init>()V
+HSPLcom/ch/core/base/BaseActivity;->setContentView(I)V
+HSPLcom/ch/core/base/BaseViewModel;-><init>()V
+HSPLcom/ch/core/base/BaseViewModel;->execute(Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+
+# ============================================================
+# 9. Network Interceptors (HSP = Hot + Startup + Post-startup)
+# ============================================================
+HSPLcom/ch/core/network/interceptor/AuthInterceptor;-><init>()V
+HSPLcom/ch/core/network/interceptor/AuthInterceptor;->intercept(Lokhttp3/Chain;)Lokhttp3/Response;
+
+# ============================================================
+# 10. Error Code Handler (HSP = Hot + Startup + Post-startup)
+# ============================================================
+HSPLcom/ch/core/network/error/ErrorCodeHandler;-><init>()V
+HSPLcom/ch/core/network/error/ErrorCodeHandler;->handle(Ljava/lang/Integer;)V
