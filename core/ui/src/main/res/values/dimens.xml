@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    core:ui 统一尺寸规范（Design System）
+    所有业务模块应引用此处定义的尺寸资源，确保视觉一致性。
+-->
+<resources>
+
+    <!-- ==================== 间距 ==================== -->
+    <dimen name="spacing_xs">4dp</dimen>
+    <dimen name="spacing_s">8dp</dimen>
+    <dimen name="spacing_m">16dp</dimen>
+    <dimen name="spacing_l">24dp</dimen>
+    <dimen name="spacing_xl">32dp</dimen>
+
+    <!-- ==================== 圆角 ==================== -->
+    <dimen name="radius_s">4dp</dimen>
+    <dimen name="radius_m">8dp</dimen>
+    <dimen name="radius_l">16dp</dimen>
+    <dimen name="radius_xl">24dp</dimen>
+
+    <!-- ==================== 字体大小 ==================== -->
+    <dimen name="text_size_caption">12sp</dimen>
+    <dimen name="text_size_body">14sp</dimen>
+    <dimen name="text_size_title">16sp</dimen>
+    <dimen name="text_size_headline">20sp</dimen>
+
+    <!-- ==================== 对话框 ==================== -->
+    <dimen name="dialog_corner_radius">16dp</dimen>
+    <dimen name="dialog_padding">24dp</dimen>
+    <dimen name="dialog_min_width">280dp</dimen>
+
+    <!-- ==================== 分割线 ==================== -->
+    <dimen name="divider_height">1dp</dimen>
+    <dimen name="divider_inset">16dp</dimen>
+
+    <!-- ==================== 角标 ==================== -->
+    <dimen name="badge_size">18dp</dimen>
+    <dimen name="badge_text_size">10sp</dimen>
+    <dimen name="badge_dot_size">8dp</dimen>
+
+</resources>

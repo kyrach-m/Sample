@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="core_ui_loading">加载中…</string>
+    <string name="core_ui_empty">暂无数据</string>
+    <string name="core_ui_error">加载失败</string>
+    <string name="core_ui_retry">点击重试</string>
+    <string name="core_ui_confirm">确认</string>
+    <string name="core_ui_cancel">取消</string>
+    <string name="core_ui_notification">通知</string>
+    <string name="core_ui_toast">提示</string>
+</resources>

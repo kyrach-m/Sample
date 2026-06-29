@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ======================================== -->
+    <!-- LoadingMask 自定义属性                    -->
+    <!-- ======================================== -->
+    <declare-styleable name="LoadingMask">
+        <!-- 遮罩背景颜色（默认半透明黑色） -->
+        <attr name="lm_maskColor" format="color" />
+        <!-- 加载文字颜色 -->
+        <attr name="lm_textColor" format="color" />
+        <!-- 加载文字大小 -->
+        <attr name="lm_textSize" format="dimension" />
+        <!-- 进度条样式（引用系统或自定义 ProgressBar style） -->
+        <attr name="lm_progressBarStyle" format="reference" />
+        <!-- 默认显示文字 -->
+        <attr name="lm_defaultText" format="string" />
+    </declare-styleable>
+
+    <!-- ======================================== -->
+    <!-- StateLayout 自定义属性                    -->
+    <!-- ======================================== -->
+    <declare-styleable name="StateLayout">
+        <!-- Loading 状态布局 -->
+        <attr name="sl_loadingLayout" format="reference" />
+        <!-- 空状态布局 -->
+        <attr name="sl_emptyLayout" format="reference" />
+        <!-- 错误状态布局 -->
+        <attr name="sl_errorLayout" format="reference" />
+        <!-- 空状态图标 -->
+        <attr name="sl_emptyIcon" format="reference" />
+        <!-- 空状态文字 -->
+        <attr name="sl_emptyText" format="string" />
+        <!-- 错误状态图标 -->
+        <attr name="sl_errorIcon" format="reference" />
+        <!-- 错误状态文字 -->
+        <attr name="sl_errorText" format="string" />
+        <!-- 初始状态（默认 loading） -->
+        <attr name="sl_initialState" format="enum">
+            <enum name="loading" value="0" />
+            <enum name="content" value="1" />
+            <enum name="empty" value="2" />
+            <enum name="error" value="3" />
+        </attr>
+    </declare-styleable>
+
+    <!-- ======================================== -->
+    <!-- SkeletonLayout 自定义属性                 -->
+    <!-- ======================================== -->
+    <declare-styleable name="SkeletonLayout">
+        <!-- 骨架屏背景色（灰色占位块） -->
+        <attr name="sk_skeletonColor" format="color" />
+        <!-- 闪烁高亮色 -->
+        <attr name="sk_highlightColor" format="color" />
+        <!-- 骨架屏圆角半径 -->
+        <attr name="sk_cornerRadius" format="dimension" />
+        <!-- 闪烁动画时长（毫秒） -->
+        <attr name="sk_duration" format="integer" />
+        <!-- 是否自动开始 -->
+        <attr name="sk_autoStart" format="boolean" />
+    </declare-styleable>
+
+    <!-- ======================================== -->
+    <!-- VeilRecyclerFrameView 自定义属性          -->
+    <!-- ======================================== -->
+    <declare-styleable name="VeilRecyclerFrameView">
+        <!-- 骨架块基础色 -->
+        <attr name="vrf_baseColor" format="color" />
+        <!-- 高亮色 -->
+        <attr name="vrf_highlightColor" format="color" />
+        <!-- 圆角半径 -->
+        <attr name="vrf_cornerRadius" format="dimension" />
+        <!-- 微光动画时长（ms） -->
+        <attr name="vrf_shimmerDuration" format="integer" />
+        <!-- 骨架项数量 -->
+        <attr name="vrf_itemCount" format="integer" />
+    </declare-styleable>
+
+    <!-- ======================================== -->
+    <!-- BadgeView 自定义属性                     -->
+    <!-- ======================================== -->
+    <declare-styleable name="BadgeView">
+        <!-- 角标背景色 -->
+        <attr name="bv_badgeColor" format="color" />
+        <!-- 角标文字颜色 -->
+        <attr name="bv_textColor" format="color" />
+        <!-- 角标文字大小 -->
+        <attr name="bv_textSize" format="dimension" />
+    </declare-styleable>
+
+    <!-- ======================================== -->
+    <!-- RoundImageView 自定义属性                -->
+    <!-- ======================================== -->
+    <declare-styleable name="RoundImageView">
+        <!-- 圆角半径 -->
+        <attr name="riv_radius" format="dimension" />
+        <!-- 形状：rectangle(0) / circle(1) -->
+        <attr name="riv_shape" format="enum">
+            <enum name="rectangle" value="0" />
+            <enum name="circle" value="1" />
+        </attr>
+    </declare-styleable>
+
+    <!-- ======================================== -->
+    <!-- FlowLayout 自定义属性                    -->
+    <!-- ======================================== -->
+    <declare-styleable name="FlowLayout">
+        <!-- 水平间距 -->
+        <attr name="fl_horizontalSpacing" format="dimension" />
+        <!-- 垂直间距 -->
+        <attr name="fl_verticalSpacing" format="dimension" />
+    </declare-styleable>
+
+</resources>
