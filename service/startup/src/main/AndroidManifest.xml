@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+
+        <!--
+            ============================================================
+            AndroidX Startup Initializer 注册
+            ============================================================
+            所有 Initializer 在此声明，由 ContentProvider 自动发现并执行。
+            通过 android:name 指定全限定类名，
+            通过 <meta-data> 配置依赖关系。
+
+            执行顺序：
+            1. NetworkInitializer（无依赖，最先执行）
+            2. StorageInitializer（依赖 NetworkInitializer）
+            3. DelayedInitializer（无依赖，与 NetworkInitializer 并行）
+
+            注意：
+            - dependencies 中列出的是当前 Initializer 依赖的其他 Initializer
+            - 被依赖的 Initializer 一定先于当前 Initializer 执行
+            - 无依赖关系的 Initializer 会并行执行以加速启动
+        -->
+
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+
+            <!-- 延迟初始化器（无依赖，与主线程并行） -->
+            <meta-data
+                android:name="com.ch.service.startup.initializer.DelayedInitializer"
+                android:value="androidx.startup" />
+
+        </provider>
+
+    </application>
+
+</manifest>

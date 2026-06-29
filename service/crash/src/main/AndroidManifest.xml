@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+
+        <!--
+            崩溃恢复页面 Activity
+            
+            运行在独立进程（:recovery），确保主进程崩溃后仍可显示 UI。
+            使用 Theme.AppCompat.Light.NoActionBar 避免主题依赖问题。
+            excludeFromRecents: 不出现在最近任务列表中
+            taskAffinity: 独立任务栈，不与主应用混合
+        -->
+        <activity
+            android:name=".RecoveryActivity"
+            android:exported="false"
+            android:process=":recovery"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            android:excludeFromRecents="true"
+            android:taskAffinity=":recovery"
+            android:launchMode="singleInstance" />
+
+    </application>
+
+</manifest>
