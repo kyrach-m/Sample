@@ -113,6 +113,33 @@ object RouterInitializer {
     }
 
     /**
+     * 检查路由模块是否已初始化
+     *
+     * @return true 表示已初始化
+     */
+    fun isInitialized(): Boolean {
+        return RouterHelper.isInitialized()
+    }
+
+    /**
+     * 获取所有已注册的路由路径列表
+     *
+     * @return 路由路径列表
+     */
+    fun getAllRoutes(): List<String> {
+        return RouterHelper.getAllRoutes()
+    }
+
+    /**
+     * 获取已注册的路由数量
+     *
+     * @return 路由数量
+     */
+    fun getRouteCount(): Int {
+        return RouterHelper.getRouteCount()
+    }
+
+    /**
      * 通过反射调用所有模块的 KSP 生成初始化类
      *
      * 使用反射的原因：生成代码位于各模块的 KSP 输出目录，

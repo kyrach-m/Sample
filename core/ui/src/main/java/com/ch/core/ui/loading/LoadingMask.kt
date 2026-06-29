@@ -133,6 +133,36 @@ class LoadingMask @JvmOverloads constructor(
     }
 
     /**
+     * 显示带进度的加载遮罩
+     *
+     * @param progress 进度值（0-100）
+     * @param message 加载提示文字（可选）
+     */
+    fun showWithProgress(progress: Int, message: String? = null) {
+        show(message ?: defaultText)
+        progressBar.isIndeterminate = false
+        progressBar.progress = progress.coerceIn(0, 100)
+    }
+
+    /**
+     * 更新加载进度
+     *
+     * @param progress 进度值（0-100）
+     */
+    fun updateProgress(progress: Int) {
+        progressBar.progress = progress.coerceIn(0, 100)
+    }
+
+    /**
+     * 更新加载文案
+     *
+     * @param message 新的加载提示文字
+     */
+    fun setMessage(message: String) {
+        textView.text = message
+    }
+
+    /**
      * 隐藏加载遮罩（带 200ms 渐隐动画）
      *
      * 动画完成后将 visibility 设为 GONE，释放绘制资源。

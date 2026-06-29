@@ -96,6 +96,12 @@ object RouterHelper {
     private var routeCount = 0
 
     /**
+     * 是否已初始化
+     */
+    @Volatile
+    private var isInitialized = false
+
+    /**
      * 初始化 RouterHelper
      *
      * 必须在 Application.onCreate 中调用。
@@ -104,7 +110,26 @@ object RouterHelper {
      */
     fun init(context: Context) {
         appContext = context.applicationContext
+        isInitialized = true
         Logger.d(TAG, "RouterHelper 初始化完成")
+    }
+
+    /**
+     * 检查是否已初始化
+     *
+     * @return true 表示已初始化
+     */
+    fun isInitialized(): Boolean {
+        return isInitialized && appContext != null
+    }
+
+    /**
+     * 获取所有已注册的路由路径列表
+     *
+     * @return 路由路径列表
+     */
+    fun getAllRoutes(): List<String> {
+        return routeTable.keys.sorted()
     }
 
     /**

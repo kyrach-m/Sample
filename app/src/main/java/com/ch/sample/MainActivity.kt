@@ -6,32 +6,43 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.Bundle
-import android.view.View
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
-import com.ch.core.common.logger.Logger
-import com.ch.sample.databinding.ActivityDashboardBinding
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
+import androidx.activity.viewModels
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.compose.rememberNavController
+import com.ch.core.base.BaseComposeActivity
+import com.ch.core.base.navigation.AppNavHost
+import com.ch.core.base.navigation.AppNavigator
+import com.ch.core.base.navigation.Screen
+import com.ch.sample.components.ComponentsScreen
+import com.ch.sample.dashboard.DashboardEvent
+import com.ch.sample.dashboard.DashboardScreen
+import com.ch.sample.dashboard.DashboardState
+import com.ch.sample.dashboard.DashboardViewModel
+import com.ch.sample.login.LoginScreen
 
 /**
- * Dashboard Activity
+ * 主 Activity（Compose 版本）
  *
  * 框架能力展示页，直观展示当前框架所有核心组件的运行状态。
+ * 使用 Jetpack Compose 实现 UI，通过 Navigation Compose 管理页面导航。
+ *
+ * 功能特性：
+ * - Compose 声明式 UI
+ * - Navigation Compose 页面导航
+ * - 沉浸式状态栏
+ * - 深色/浅色主题切换
+ * - 网络状态监听
  */
-class MainActivity : AppCompatActivity() {
+class MainActivity : BaseComposeActivity<DashboardState, DashboardEvent, DashboardViewModel>() {
 
-    private var _binding: ActivityDashboardBinding? = null
-    private val binding get() = _binding!!
+    override val viewModel: DashboardViewModel by viewModels()
 
-    private lateinit var viewModel: DashboardViewModel
     private lateinit var connectivityManager: ConnectivityManager
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
-
-    private var logCount = 0
 
     companion object {
         private const val TAG = "Dashboard"
@@ -39,16 +50,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        _binding = ActivityDashboardBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        viewModel = DashboardViewModel()
 
         connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-
-        initViews()
-        observeState()
-        observeEvents()
 
         viewModel.loadDashboardData(this)
     }
@@ -63,6 +66,42 @@ class MainActivity : AppCompatActivity() {
         unregisterNetworkCallback()
     }
 
+    @androidx.compose.runtime.Composable
+    override fun ScreenContent() {
+        val navController = rememberNavController()
+        val navigator = remember { AppNavigator(navController) }
+        val context = LocalContext.current
+
+        AppNavHost(
+            navController = navController,
+            startDestination = Screen.DASHBOARD,
+            dashboardScreen = {
+                DashboardScreen(
+                    viewModel = viewModel,
+                    onNavigateToComponents = { navigator.navigateToComponents() }
+                )
+            },
+            componentsScreen = {
+                ComponentsScreen()
+            },
+            loginScreen = {
+                LoginScreen(
+                    onLoginSuccess = { navigator.navigateToDashboard() }
+                )
+            }
+        )
+    }
+
+    override fun handleEvent(event: DashboardEvent) {
+        when (event) {
+            is DashboardEvent.AppendLog -> {
+            }
+            is DashboardEvent.ShowMessage -> {
+                showSnackbar(event.message)
+            }
+        }
+    }
+
     private fun registerNetworkCallback() {
         val networkRequest = NetworkRequest.Builder()
             .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
@@ -72,17 +111,11 @@ class MainActivity : AppCompatActivity() {
             override fun onAvailable(network: Network) {
                 super.onAvailable(network)
                 viewModel.updateNetworkStatus(true)
-                runOnUiThread {
-                    updateNetworkUI(true)
-                }
             }
 
             override fun onLost(network: Network) {
                 super.onLost(network)
                 viewModel.updateNetworkStatus(false)
-                runOnUiThread {
-                    updateNetworkUI(false)
-                }
             }
 
             override fun onCapabilitiesChanged(
@@ -92,191 +125,22 @@ class MainActivity : AppCompatActivity() {
                 super.onCapabilitiesChanged(network, networkCapabilities)
                 val isConnected = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
                 viewModel.updateNetworkStatus(isConnected)
-                runOnUiThread {
-                    updateNetworkUI(isConnected)
-                }
             }
         }
 
-        connectivityManager.registerNetworkCallback(networkRequest, networkCallback!!)
+        try {
+            connectivityManager.registerNetworkCallback(networkRequest, networkCallback!!)
+        } catch (e: Exception) {
+        }
     }
 
     private fun unregisterNetworkCallback() {
         networkCallback?.let {
-            connectivityManager.unregisterNetworkCallback(it)
+            try {
+                connectivityManager.unregisterNetworkCallback(it)
+            } catch (e: Exception) {
+            }
             networkCallback = null
         }
-    }
-
-    private fun initViews() {
-        binding.btnSimulateCrash.setOnClickListener {
-            viewModel.simulateCrash()
-        }
-
-        binding.btnClearCache.setOnClickListener {
-            viewModel.clearCache()
-        }
-
-        binding.btnPrintRoutes.setOnClickListener {
-            viewModel.printRoutes()
-        }
-
-        binding.btnTestNetwork.setOnClickListener {
-            viewModel.testNetwork(this)
-        }
-
-        binding.btnClearLogs.setOnClickListener {
-            binding.tvLogs.text = ""
-            logCount = 0
-            binding.tvLogCount.text = "0 条"
-            viewModel.addLog(TAG, "日志已清空")
-        }
-    }
-
-    private fun observeState() {
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.state.collectLatest { state ->
-                    state?.let { updateUI(it) }
-                }
-            }
-        }
-    }
-
-    private fun observeEvents() {
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.event.collectLatest { event ->
-                    when (event) {
-                        is DashboardEvent.AppendLog -> appendLog(event.message)
-                        is DashboardEvent.ShowMessage -> showToast(event.message)
-                    }
-                }
-            }
-        }
-    }
-
-    private fun updateUI(state: DashboardState) {
-        binding.tvVersion.text = "v${state.appVersion}"
-        binding.tvBuildType.text = state.buildType.uppercase()
-
-        binding.tvDeviceId.text = state.deviceId
-        binding.tvScreenSize.text = state.screenSize
-        binding.tvSystemVersion.text = state.systemVersion
-
-        binding.tvProcessCreateTime.text = "${state.processCreateTime}ms"
-        binding.tvAppCreateTime.text = "${state.appCreateTime}ms"
-        binding.tvTaskExecutionTime.text = "${state.taskExecutionTime}ms"
-        binding.tvTotalTime.text = "${state.totalTime}ms"
-        binding.tvMemoryUsage.text = state.memoryUsage
-
-        updateNetworkUI(state.isNetworkConnected)
-
-        updateStatusCard(
-            tvStatus = binding.tvStorageStatus,
-            ivIndicator = binding.ivStorageIndicator,
-            status = state.isStorageReady,
-            onlineText = "MMKV 就绪",
-            offlineText = "未初始化"
-        )
-
-        updateStatusCard(
-            tvStatus = binding.tvRouterStatus,
-            ivIndicator = binding.ivRouterIndicator,
-            status = state.isRouterReady,
-            onlineText = "已注册 ${state.routeCount} 条路由",
-            offlineText = "路由未初始化"
-        )
-
-        updateStatusCard(
-            tvStatus = binding.tvLoggerStatus,
-            ivIndicator = binding.ivLoggerIndicator,
-            status = state.isLoggerReady,
-            onlineText = "日志系统运行中",
-            offlineText = "日志未初始化"
-        )
-
-        updateStatusCard(
-            tvStatus = binding.tvCrashStatus,
-            ivIndicator = binding.ivCrashIndicator,
-            status = state.isCrashHandlerReady,
-            onlineText = "全局崩溃捕获已启用",
-            offlineText = "崩溃捕获未启用"
-        )
-    }
-
-    private fun updateNetworkUI(isConnected: Boolean) {
-        val networkType = if (isConnected) {
-            val capabilities = connectivityManager.activeNetwork?.let {
-                connectivityManager.getNetworkCapabilities(it)
-            }
-            if (capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true) {
-                "WiFi"
-            } else if (capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true) {
-                "移动数据"
-            } else {
-                "网络"
-            }
-        } else {
-            ""
-        }
-
-        val onlineText = if (isConnected && networkType.isNotEmpty()) {
-            "已连接 ($networkType)"
-        } else if (isConnected) {
-            "已连接"
-        } else {
-            "未连接"
-        }
-
-        updateStatusCard(
-            tvStatus = binding.tvNetworkStatus,
-            ivIndicator = binding.ivNetworkIndicator,
-            status = isConnected,
-            onlineText = onlineText,
-            offlineText = "未连接"
-        )
-    }
-
-    private fun updateStatusCard(
-        tvStatus: android.widget.TextView,
-        ivIndicator: android.widget.ImageView,
-        status: Boolean,
-        onlineText: String,
-        offlineText: String
-    ) {
-        if (status) {
-            tvStatus.text = onlineText
-            tvStatus.setTextColor(getColor(com.ch.sample.R.color.colorOnSurfaceVariant))
-            ivIndicator.setImageResource(com.ch.sample.R.drawable.ic_status_online)
-        } else {
-            tvStatus.text = offlineText
-            tvStatus.setTextColor(getColor(com.ch.sample.R.color.colorError))
-            ivIndicator.setImageResource(com.ch.sample.R.drawable.ic_status_offline)
-        }
-    }
-
-    private fun appendLog(message: String) {
-        val timestamp = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
-            .format(java.util.Date())
-        val logLine = "[$timestamp] $message\n"
-        binding.tvLogs.append(logLine)
-
-        logCount++
-        binding.tvLogCount.text = "$logCount 条"
-
-        binding.svLogs.post {
-            binding.svLogs.fullScroll(View.FOCUS_DOWN)
-        }
-    }
-
-    private fun showToast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        unregisterNetworkCallback()
-        _binding = null
     }
 }

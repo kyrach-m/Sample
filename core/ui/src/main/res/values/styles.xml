@@ -19,6 +19,19 @@
         <item name="colorOnBackground">@color/on_secondary</item>
         <item name="colorOnSurface">@color/on_surface</item>
         <item name="colorOnError">@color/on_error</item>
+
+        <item name="textAppearanceHeadlineLarge">@style/TextAppearance.Core.HeadlineLarge</item>
+        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.Core.HeadlineMedium</item>
+        <item name="textAppearanceHeadlineSmall">@style/TextAppearance.Core.HeadlineSmall</item>
+        <item name="textAppearanceTitleLarge">@style/TextAppearance.Core.TitleLarge</item>
+        <item name="textAppearanceTitleMedium">@style/TextAppearance.Core.TitleMedium</item>
+        <item name="textAppearanceTitleSmall">@style/TextAppearance.Core.TitleSmall</item>
+        <item name="textAppearanceBodyLarge">@style/TextAppearance.Core.BodyLarge</item>
+        <item name="textAppearanceBodyMedium">@style/TextAppearance.Core.BodyMedium</item>
+        <item name="textAppearanceBodySmall">@style/TextAppearance.Core.BodySmall</item>
+        <item name="textAppearanceLabelLarge">@style/TextAppearance.Core.LabelLarge</item>
+        <item name="textAppearanceLabelMedium">@style/TextAppearance.Core.LabelMedium</item>
+        <item name="textAppearanceLabelSmall">@style/TextAppearance.Core.LabelSmall</item>
     </style>
 
     <!-- ==================== 对话框样式 ==================== -->
@@ -28,6 +41,14 @@
 
     <style name="CoreDialogShape">
         <item name="cornerSize">@dimen/dialog_corner_radius</item>
+    </style>
+
+    <!-- 全局对话框样式 -->
+    <style name="GlobalDialogTheme" parent="Theme.AppCompat.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:backgroundDimAmount">0.5</item>
     </style>
 
     <!-- 底部弹出对话框样式 -->
@@ -42,6 +63,55 @@
     <style name="CoreBottomSheetShape">
         <item name="cornerSizeTopLeft">@dimen/radius_l</item>
         <item name="cornerSizeTopRight">@dimen/radius_l</item>
+    </style>
+
+    <!-- ==================== 全局文本样式（Design Tokens） ==================== -->
+    <style name="TextAppearance.Core.HeadlineLarge" parent="TextAppearance.Material3.HeadlineLarge">
+        <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="TextAppearance.Core.HeadlineMedium" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="TextAppearance.Core.HeadlineSmall" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="TextAppearance.Core.TitleLarge" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="TextAppearance.Core.TitleMedium" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="TextAppearance.Core.TitleSmall" parent="TextAppearance.Material3.TitleSmall">
+        <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="TextAppearance.Core.BodyLarge" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="TextAppearance.Core.BodyMedium" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="TextAppearance.Core.BodySmall" parent="TextAppearance.Material3.BodySmall">
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <style name="TextAppearance.Core.LabelLarge" parent="TextAppearance.Material3.LabelLarge">
+        <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="TextAppearance.Core.LabelMedium" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <style name="TextAppearance.Core.LabelSmall" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
     </style>
 
 </resources>
