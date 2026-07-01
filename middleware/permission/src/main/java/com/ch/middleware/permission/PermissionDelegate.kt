@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
  *
  * 使用示例：
  * ```kotlin
- * class MyActivity : AppCompatActivity() {
+ * class MyActivity : ComponentActivity() {
  *
  *     // 创建权限委托
  *     private val permissionDelegate by lazy {

@@ -7,8 +7,8 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /**
  * 应用程序主题组件。
@@ -45,11 +45,19 @@ val LocalExtendedColors = compositionLocalOf { LightExtendedColors }
  */
 @Composable
 fun AppTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean? = null,
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
-    val extendedColors = if (darkTheme) DarkExtendedColors else LightExtendedColors
+    // 外部传入 darkTheme 时使用外部值；否则从 ThemeManager 响应式读取
+    val themeMode by ThemeManager.themeMode.collectAsStateWithLifecycle()
+    val isDark = darkTheme ?: when (themeMode) {
+        ThemeManager.ThemeMode.LIGHT -> false
+        ThemeManager.ThemeMode.DARK -> true
+        ThemeManager.ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    }
+
+    val colorScheme = if (isDark) DarkColorScheme else LightColorScheme
+    val extendedColors = if (isDark) DarkExtendedColors else LightExtendedColors
 
     CompositionLocalProvider(LocalExtendedColors provides extendedColors) {
         MaterialTheme(

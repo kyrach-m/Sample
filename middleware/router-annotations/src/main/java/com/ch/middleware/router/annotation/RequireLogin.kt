@@ -11,7 +11,7 @@ package com.ch.middleware.router.annotation
  * ```kotlin
  * @Route(path = "/settings/ProfileActivity")
  * @RequireLogin
- * class ProfileActivity : AppCompatActivity() {
+ * class ProfileActivity : ComponentActivity() {
  *     // 未登录时访问此页面会被自动跳转到登录页
  * }
  * ```

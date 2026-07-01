@@ -1,8 +1,9 @@
 package com.ch.core.ui.theme
 
-import android.content.Context
 import android.content.res.Configuration
-import androidx.appcompat.app.AppCompatDelegate
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import com.ch.core.storage.kv.KVStorage
 import com.ch.core.storage.kv.Scope
 
@@ -14,6 +15,7 @@ import com.ch.core.storage.kv.Scope
  * - 浅色模式（LIGHT）：强制使用浅色主题
  * - 深色模式（DARK）：强制使用深色主题
  *
+ * 通过 [StateFlow] 暴露主题状态，Compose UI 自动响应变化，无需重建 Activity。
  * 使用 [KVStorage] 的 CONFIG 作用域持久化存储主题设置。
  *
  * 用法示例：
@@ -21,11 +23,11 @@ import com.ch.core.storage.kv.Scope
  * // 设置深色模式
  * ThemeManager.setThemeMode(ThemeMode.DARK)
  *
- * // 获取当前是否为深色主题
- * val isDark = ThemeManager.isDarkTheme()
+ * // 观察主题变化（在 Composable 中）
+ * val themeMode by ThemeManager.themeMode.collectAsState()
  *
- * // 应用主题（在 Activity.onCreate 中调用）
- * ThemeManager.applyTheme(activity)
+ * // 切换主题
+ * ThemeManager.toggleTheme()
  * ```
  */
 object ThemeManager {
@@ -45,33 +47,35 @@ object ThemeManager {
     private const val KEY_THEME_MODE = "theme_mode"
 
     /**
-     * 获取当前主题模式
+     * 当前主题模式（响应式）
      *
-     * @return 当前主题模式，默认为跟随系统
+     * Compose UI 通过 collectAsState 自动订阅变化，
+     * 非 Compose 场景通过 [themeModeValue] 获取当前值。
      */
-    fun getThemeMode(): ThemeMode {
-        val modeName = KVStorage.getString(KEY_THEME_MODE, scope = Scope.CONFIG)
-        return if (modeName.isNotEmpty()) {
-            try {
-                ThemeMode.valueOf(modeName)
-            } catch (e: IllegalArgumentException) {
-                ThemeMode.SYSTEM
-            }
-        } else {
-            ThemeMode.SYSTEM
-        }
-    }
+    private val _themeMode = MutableStateFlow(getPersistedThemeMode())
+    val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
+
+    /**
+     * 获取当前主题模式值（非响应式）
+     *
+     * 适用于非 Compose 场景（如日志、埋点）。
+     * Compose UI 应使用 [themeMode] Flow。
+     */
+    val themeModeValue: ThemeMode
+        get() = _themeMode.value
 
     /**
      * 设置主题模式
      *
-     * 设置后立即生效并持久化存储。
+     * 设置后立即生效，Compose UI 自动重组，无需重建 Activity。
      *
      * @param mode 主题模式
      */
     fun setThemeMode(mode: ThemeMode) {
-        KVStorage.putString(KEY_THEME_MODE, mode.name, Scope.CONFIG)
-        applyNightMode(mode)
+        if (_themeMode.value != mode) {
+            _themeMode.value = mode
+            KVStorage.putString(KEY_THEME_MODE, mode.name, Scope.CONFIG)
+        }
     }
 
     /**
@@ -82,7 +86,7 @@ object ThemeManager {
      * @return true 表示深色主题，false 表示浅色主题
      */
     fun isDarkTheme(): Boolean {
-        return when (getThemeMode()) {
+        return when (_themeMode.value) {
             ThemeMode.LIGHT -> false
             ThemeMode.DARK -> true
             ThemeMode.SYSTEM -> isSystemDarkTheme()
@@ -90,31 +94,10 @@ object ThemeManager {
     }
 
     /**
-     * 判断当前是否为深色主题（兼容旧版 API）
-     *
-     * @param context 上下文（未使用，保持 API 兼容）
-     * @return true 表示深色主题，false 表示浅色主题
-     */
-    fun isDarkMode(context: Context? = null): Boolean {
-        return isDarkTheme()
-    }
-
-    /**
-     * 应用主题到 Activity
-     *
-     * 在 Activity 的 super.onCreate() 之前调用，
-     * 确保主题正确应用。
-     *
-     * @param context Activity 上下文
-     */
-    fun applyTheme(context: Context) {
-        applyNightMode(getThemeMode())
-    }
-
-    /**
      * 切换主题
      *
-     * 在浅色和深色之间切换，系统模式下切换为浅色。
+     * 在浅色和深色之间切换。如果当前为 SYSTEM 模式，
+     * 则根据当前系统主题切换到相反模式（LIGHT 或 DARK）。
      *
      * @return 切换后的主题模式
      */
@@ -126,8 +109,6 @@ object ThemeManager {
 
     /**
      * 判断系统是否为深色主题
-     *
-     * @return true 表示系统当前为深色主题
      */
     private fun isSystemDarkTheme(): Boolean {
         val currentNightMode = android.content.res.Resources.getSystem().configuration.uiMode and
@@ -136,18 +117,18 @@ object ThemeManager {
     }
 
     /**
-     * 应用夜间模式
-     *
-     * 使用 AppCompatDelegate 设置全局夜间模式。
-     *
-     * @param mode 主题模式
+     * 从持久化存储中读取主题模式
      */
-    private fun applyNightMode(mode: ThemeMode) {
-        val nightMode = when (mode) {
-            ThemeMode.LIGHT -> AppCompatDelegate.MODE_NIGHT_NO
-            ThemeMode.DARK -> AppCompatDelegate.MODE_NIGHT_YES
-            ThemeMode.SYSTEM -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+    private fun getPersistedThemeMode(): ThemeMode {
+        val modeName = KVStorage.getString(KEY_THEME_MODE, scope = Scope.CONFIG)
+        return if (modeName.isNotEmpty()) {
+            try {
+                ThemeMode.valueOf(modeName)
+            } catch (e: IllegalArgumentException) {
+                ThemeMode.SYSTEM
+            }
+        } else {
+            ThemeMode.SYSTEM
         }
-        AppCompatDelegate.setDefaultNightMode(nightMode)
     }
 }

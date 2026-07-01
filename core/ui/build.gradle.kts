@@ -22,11 +22,7 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.activity.ktx)
-    implementation(libs.androidx.viewpager2)
-    implementation(libs.material)
 
     // Window 窗口适配（折叠屏/大屏适配）
     implementation(libs.androidx.window)
@@ -46,4 +42,5 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.runtime.livedata)
+    implementation(libs.androidx.compose.lifecycle.runtime)
 }

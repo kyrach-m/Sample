@@ -67,10 +67,8 @@ dependencies {
     // implementation(project(":features:feature_login")) // removed - use as template for new features
 
     // AndroidX
-    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.splashscreen)
-    implementation(libs.material)
 
     // Compose
     implementation(platform(libs.androidx.compose.bom))

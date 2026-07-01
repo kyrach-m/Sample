@@ -1,6 +1,5 @@
 package com.ch.core.base
 
-import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,7 +17,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.ch.core.base.event.ViewEvent
 import com.ch.core.ui.theme.AppTheme
-import com.ch.core.ui.theme.ThemeManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -27,11 +25,6 @@ import kotlinx.coroutines.launch
  *
  * 提供基于 Jetpack Compose 的 Activity 基类，继承自 ComponentActivity。
  * 内置沉浸式状态栏、主题管理、ViewModel 绑定、状态/事件观察等功能。
- *
- * 与 [BaseActivity] 的区别：
- * - 使用 Compose 声明式 UI 替代 XML + ViewBinding
- * - 使用 [AppTheme] 提供主题支持
- * - 使用 [enableEdgeToEdge] 实现沉浸式状态栏
  *
  * 用法示例：
  * ```kotlin
@@ -76,12 +69,11 @@ abstract class BaseComposeActivity<
     protected val snackbarHostState = SnackbarHostState()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        applyThemeIfNeeded()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         observeEvents()
         setContent {
-            AppTheme(darkTheme = ThemeManager.isDarkTheme()) {
+            AppTheme {
                 Box(modifier = Modifier.fillMaxSize()) {
                     ScreenContent()
                     SnackbarHost(
@@ -129,16 +121,6 @@ abstract class BaseComposeActivity<
     }
 
     /**
-     * 应用主题
-     *
-     * 在 super.onCreate() 之前调用，确保主题正确应用。
-     * 根据 [ThemeManager] 的设置决定使用浅色还是深色主题。
-     */
-    private fun applyThemeIfNeeded() {
-        ThemeManager.applyTheme(this)
-    }
-
-    /**
      * 显示 Snackbar
      *
      * 在 Compose 页面中显示短时提示信息。
@@ -149,11 +131,6 @@ abstract class BaseComposeActivity<
         lifecycleScope.launch {
             snackbarHostState.showSnackbar(message)
         }
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-        window.decorView.requestLayout()
     }
 
     /**

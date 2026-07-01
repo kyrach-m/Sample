@@ -1,15 +1,12 @@
 package com.ch.sample.splash
 
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
-import com.ch.core.common.logger.Logger
-import android.view.animation.AnimationUtils
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
 import androidx.core.splashscreen.SplashScreen
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.ch.core.common.logger.Logger
 import com.ch.sample.MainActivity
-import com.ch.sample.R
 import com.ch.service.startup.dag.StartupScheduler
 import com.ch.service.startup.monitor.StartupMonitor
 
@@ -23,9 +20,10 @@ import com.ch.service.startup.monitor.StartupMonitor
  * 4. 所有任务完成后平滑过渡到主页
  *
  * 设计说明：
+ * - 继承 [ComponentActivity]，纯 Compose 技术栈，不依赖 View 体系
  * - 使用 Theme.SplashScreen 官方主题，系统自动处理自适应图标尺寸适配
- * - 禁止使用布局文件作为闪屏页内容，避免布局解析耗时
- * - 过渡动画使用渐隐渐现（fade_in / fade_out）
+ * - 本页面无 Compose UI 内容，闪屏界面完全由系统 SplashScreen 主题渲染
+ * - 启动任务完成后直接跳转 MainActivity，过渡动画由 Compose Navigation 处理
  *
  * 启动流程：
  * ```
@@ -35,13 +33,12 @@ import com.ch.service.startup.monitor.StartupMonitor
  *     ↓
  * 启动任务调度执行（StartupScheduler）
  *     ↓
- * 任务完成 → 启动 MainActivity（渐隐渐现动画）
+ * 任务完成 → 启动 MainActivity
  *     ↓
  * SplashActivity.finish()
  * ```
  */
-@SuppressLint("CustomSplashScreen")
-class SplashActivity : AppCompatActivity() {
+class SplashActivity : ComponentActivity() {
 
     companion object {
         private const val TAG = "SplashActivity"
@@ -164,7 +161,8 @@ class SplashActivity : AppCompatActivity() {
     /**
      * 跳转到主页
      *
-     * 使用渐隐渐现动画过渡。
+     * 使用 FLAG_ACTIVITY_CLEAR_TASK 确保任务栈干净，
+     * SplashScreen 的 fade-out 动画由系统自动处理。
      */
     private fun navigateToMain() {
         StartupMonitor.beginStage(StartupMonitor.Stage.FIRST_FRAME)
@@ -174,10 +172,9 @@ class SplashActivity : AppCompatActivity() {
         }
 
         startActivity(intent)
-        overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
+        finish()
 
         StartupMonitor.endStage(StartupMonitor.Stage.FIRST_FRAME)
-        finish()
     }
 
     override fun onDestroy() {
