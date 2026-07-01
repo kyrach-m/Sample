@@ -57,7 +57,6 @@
 -keep class * implements com.google.gson.JsonDeserializer
 
 # 项目数据模型（按实际包名保留）
--keep class com.ch.features.login.model.** { *; }
 -keep class com.ch.core.network.token.** { *; }
 
 # Gson @SerializedName 注解保留

@@ -11,4 +11,7 @@
     <!-- Drawable / Launcher 图标引用色 -->
     <color name="orange_500">#FFF59E0B</color>
     <color name="colorPrimary">#FF1976D2</color>
+
+    <!-- Compose 主题背景色（XML 窗口过渡期使用，避免黑屏） -->
+    <color name="window_background_light">#FFFFFBFE</color>
 </resources>

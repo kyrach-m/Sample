@@ -8,7 +8,6 @@ import com.ch.core.common.logger.Logger
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
@@ -391,7 +390,7 @@ class PermissionHelper(private val activity: ComponentActivity) {
     /**
      * 显示 Rationale 解释弹窗（挂起函数）
      *
-     * 使用 MaterialAlertDialog 向用户解释为什么需要该权限，
+     * 通过 [PermissionDialogState] 桥接，由 app 层 Compose 树渲染 GlobalDialog。
      * 用户点击"确认"后返回 true，点击"取消"返回 false。
      *
      * @param title 弹窗标题
@@ -405,27 +404,15 @@ class PermissionHelper(private val activity: ComponentActivity) {
         message: String,
         confirmText: String,
         cancelText: String
-    ): Boolean = suspendCancellableCoroutine { cont ->
-        MaterialAlertDialogBuilder(activity)
-            .setTitle(title)
-            .setMessage(message)
-            .setCancelable(false)
-            .setPositiveButton(confirmText) { dialog, _ ->
-                dialog.dismiss()
-                if (cont.isActive) cont.resume(true)
-            }
-            .setNegativeButton(cancelText) { dialog, _ ->
-                dialog.dismiss()
-                if (cont.isActive) cont.resume(false)
-            }
-            .setOnCancelListener {
-                if (cont.isActive) cont.resume(false)
-            }
-            .show()
-
-        cont.invokeOnCancellation {
-            Logger.w(TAG, "Rationale 弹窗被取消")
-        }
+    ): Boolean {
+        return PermissionDialogState.requestDialog(
+            PermissionDialogRequest(
+                title = title,
+                message = message,
+                confirmText = confirmText,
+                cancelText = cancelText
+            )
+        )
     }
 
     /**
@@ -433,6 +420,7 @@ class PermissionHelper(private val activity: ComponentActivity) {
      *
      * 当权限被永久拒绝时，弹窗告知用户并提供"去设置"按钮，
      * 点击后返回 true（调用方应调用 [openAppSettings] 跳转）。
+     * 通过 [PermissionDialogState] 桥接，由 app 层 Compose 树渲染 GlobalDialog。
      *
      * @param title 弹窗标题
      * @param message 弹窗正文
@@ -445,23 +433,15 @@ class PermissionHelper(private val activity: ComponentActivity) {
         message: String,
         confirmText: String,
         cancelText: String
-    ): Boolean = suspendCancellableCoroutine { cont ->
-        MaterialAlertDialogBuilder(activity)
-            .setTitle(title)
-            .setMessage(message)
-            .setCancelable(false)
-            .setPositiveButton(confirmText) { dialog, _ ->
-                dialog.dismiss()
-                if (cont.isActive) cont.resume(true)
-            }
-            .setNegativeButton(cancelText) { dialog, _ ->
-                dialog.dismiss()
-                if (cont.isActive) cont.resume(false)
-            }
-            .setOnCancelListener {
-                if (cont.isActive) cont.resume(false)
-            }
-            .show()
+    ): Boolean {
+        return PermissionDialogState.requestDialog(
+            PermissionDialogRequest(
+                title = title,
+                message = message,
+                confirmText = confirmText,
+                cancelText = cancelText
+            )
+        )
     }
 
     /**

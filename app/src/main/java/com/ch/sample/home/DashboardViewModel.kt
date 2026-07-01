@@ -1,4 +1,4 @@
-package com.ch.sample.dashboard
+package com.ch.sample.home
 
 import android.content.Context
 import android.content.pm.PackageManager
@@ -11,6 +11,8 @@ import com.ch.core.storage.kv.KVStorage
 import com.ch.core.storage.kv.Scope
 import com.ch.service.startup.monitor.StartupMonitor
 import com.ch.middleware.router.RouterInitializer
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.text.DecimalFormat
 
 /**
@@ -40,19 +42,20 @@ class DashboardViewModel(
      */
     fun loadDashboardData(context: Context) {
         launch {
-            val appVersion = getAppVersion(context)
-            val buildType = getBuildType(context)
-            val deviceId = getDeviceId()
-            val screenSize = getScreenSize(context)
-            val systemVersion = getSystemVersion()
-            val memoryUsage = getMemoryUsage()
-            val isStorageReady = checkStorageReady()
-            val isRouterReady = checkRouterReady()
-            val routeCount = getRouteCount()
-            val isLoggerReady = checkLoggerReady()
-            val isCrashHandlerReady = checkCrashHandlerReady()
+            // IO 操作切到后台线程，避免阻塞主线程导致白屏
+            val data = withContext(Dispatchers.IO) {
+                val appVersion = getAppVersion(context)
+                val buildType = getBuildType(context)
+                val deviceId = getDeviceId()
+                val screenSize = getScreenSize(context)
+                val systemVersion = getSystemVersion()
+                val memoryUsage = getMemoryUsage()
+                val isStorageReady = checkStorageReady()
+                val isRouterReady = checkRouterReady()
+                val routeCount = getRouteCount()
+                val isLoggerReady = checkLoggerReady()
+                val isCrashHandlerReady = checkCrashHandlerReady()
 
-            setState(
                 DashboardState(
                     appVersion = appVersion,
                     buildType = buildType,
@@ -70,13 +73,15 @@ class DashboardViewModel(
                     isLoggerReady = isLoggerReady,
                     isCrashHandlerReady = isCrashHandlerReady
                 )
-            )
+            }
+
+            setState(data)
 
             addLog(TAG, "Dashboard 数据加载完成")
-            addLog(TAG, "App 版本: $appVersion ($buildType)")
-            addLog(TAG, "设备: $deviceId | 系统: $systemVersion")
-            addLog(TAG, "存储: ${if (isStorageReady) "就绪" else "未初始化"}")
-            addLog(TAG, "路由: $routeCount 条已注册")
+            addLog(TAG, "App 版本: ${data.appVersion} (${data.buildType})")
+            addLog(TAG, "设备: ${data.deviceId} | 系统: ${data.systemVersion}")
+            addLog(TAG, "存储: ${if (data.isStorageReady) "就绪" else "未初始化"}")
+            addLog(TAG, "路由: ${data.routeCount} 条已注册")
         }
     }
 
@@ -96,8 +101,10 @@ class DashboardViewModel(
      * 用于测试全局崩溃捕获功能。
      */
     fun simulateCrash() {
-        addLog(TAG, "模拟崩溃触发...")
-        throw RuntimeException("测试崩溃 - DashboardSimulateCrash")
+        launch {
+            addLog(TAG, "模拟崩溃触发...")
+            throw RuntimeException("测试崩溃 - DashboardSimulateCrash")
+        }
     }
 
     /**

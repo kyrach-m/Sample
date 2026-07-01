@@ -24,7 +24,6 @@ import com.ch.middleware.router.RouterInitializer
 import com.ch.sample.startup.ConfigPreloadTask
 import com.ch.sample.startup.DatabaseWarmUpTask
 import com.ch.service.startup.dag.StartupScheduler
-import com.ch.service.startup.idle.IdleTaskExecutor
 import com.ch.service.startup.monitor.StartupMonitor
 import com.ch.service.startup.battery.BatteryOptimizationHelper
 import com.ch.core.network.base.BaseApi
@@ -272,10 +271,7 @@ class BaseApplication : Application() {
             Logger.i(TAG, "埋点定期上传任务已注册")
         }
 
-        // ========================================
-        // 12. 启动空闲任务执行器
-        // ========================================
-        IdleTaskExecutor.start()
+        // IdleTaskExecutor 由 DelayedInitializer（AndroidX Startup）自动启动，无需手动调用
 
         StartupMonitor.endStage(StartupMonitor.Stage.APPLICATION_CREATE)
     }

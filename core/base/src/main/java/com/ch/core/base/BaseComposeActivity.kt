@@ -5,12 +5,21 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -19,6 +28,7 @@ import com.ch.core.base.event.ViewEvent
 import com.ch.core.ui.theme.AppTheme
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 
 /**
  * Compose Activity 基类
@@ -62,24 +72,49 @@ abstract class BaseComposeActivity<
     protected abstract val viewModel: VM
 
     /**
-     * Snackbar 宿主状态
+     * 内容是否准备就绪
      *
-     * 用于在 Compose 中显示 Snackbar 提示。
+     * 控制 Compose 内容是否从占位状态切换到真实页面。
+     * 使用 mutableStateOf 确保修改后触发重组。
      */
-    protected val snackbarHostState = SnackbarHostState()
+    private var isContentReady by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         observeEvents()
+
         setContent {
             AppTheme {
-                Box(modifier = Modifier.fillMaxSize()) {
+                // 1. 占位层：品牌色背景 + 品牌文字，避免白屏
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (!isContentReady) {
+                        // 显示品牌文字，让用户感知正在加载
+                        Text(
+                            text = "Sample",
+                            color = Color.White,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                // 2. 等待 Compose 运行时完全初始化后标记就绪
+                LaunchedEffect(Unit) {
+                    // 让出当前协程，确保 Compose 完成首次组合
+                    yield()
+                    // 标记内容就绪，触发重组显示真实页面
+                    isContentReady = true
+                }
+
+                // 3. 内容就绪后，显示真实页面
+                if (isContentReady) {
                     ScreenContent()
-                    SnackbarHost(
-                        hostState = snackbarHostState,
-                        modifier = Modifier.matchParentSize()
-                    )
                 }
             }
         }
@@ -118,19 +153,6 @@ abstract class BaseComposeActivity<
      * @param event 事件对象
      */
     protected open fun handleEvent(event: Event) {
-    }
-
-    /**
-     * 显示 Snackbar
-     *
-     * 在 Compose 页面中显示短时提示信息。
-     *
-     * @param message 提示消息
-     */
-    protected fun showSnackbar(message: String) {
-        lifecycleScope.launch {
-            snackbarHostState.showSnackbar(message)
-        }
     }
 
     /**

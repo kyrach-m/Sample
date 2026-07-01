@@ -1,6 +1,7 @@
-package com.ch.sample.dashboard
+package com.ch.sample.home
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,6 +11,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -25,11 +28,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -70,7 +75,13 @@ fun DashboardScreen(
     var showThemeDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
+    // 使用 derivedStateOf 缓存日志数量，避免每次日志变化时重组整个标题
+    val logCount by remember { derivedStateOf { logs.size } }
+
+    // 延迟事件收集，让首帧先渲染，避免阻塞 Compose 初始化
     LaunchedEffect(Unit) {
+        // 让出当前帧，确保首帧渲染完成
+        delay(1)
         viewModel.event.collect { event ->
             when (event) {
                 is DashboardEvent.AppendLog -> {
@@ -89,6 +100,7 @@ fun DashboardScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -116,11 +128,12 @@ fun DashboardScreen(
             onClearLogs = { logs.clear() }
         )
 
-        // 日志面板
+        // 日志面板（懒加载：首帧先显示空状态，日志就绪后再渲染）
         LogPanel(
             logs = logs,
+            logCount = logCount,
             listState = listState,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.height(200.dp)
         )
     }
 
@@ -300,15 +313,21 @@ private fun FunctionTestButtons(
 
 /**
  * 日志面板
+ *
+ * @param logs 日志列表
+ * @param logCount 日志数量（使用 derivedStateOf 缓存，减少重组）
+ * @param listState LazyColumn 状态
+ * @param modifier 修饰符
  */
 @Composable
 private fun LogPanel(
     logs: List<String>,
+    logCount: Int,
     listState: androidx.compose.foundation.lazy.LazyListState,
     modifier: Modifier = Modifier
 ) {
     GlobalCard(
-        title = "实时日志 (${logs.size} 条)"
+        title = "实时日志 ($logCount 条)"
     ) {
         Card(
             modifier = modifier
@@ -319,20 +338,34 @@ private fun LogPanel(
                 containerColor = Color(0xFF1A1A2E)
             )
         ) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp)
-            ) {
-                items(logs) { log ->
+            if (logs.isEmpty()) {
+                // 空状态占位，避免首次渲染时的空白
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
                     Text(
-                        text = log,
-                        color = Color(0xFFE0E0E0),
-                        fontSize = 11.sp,
-                        lineHeight = 14.sp,
-                        modifier = Modifier.padding(vertical = 1.dp)
+                        text = "暂无日志",
+                        color = Color(0xFF808080),
+                        fontSize = 12.sp
                     )
+                }
+            } else {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(8.dp)
+                ) {
+                    items(logs) { log ->
+                        Text(
+                            text = log,
+                            color = Color(0xFFE0E0E0),
+                            fontSize = 11.sp,
+                            lineHeight = 14.sp,
+                            modifier = Modifier.padding(vertical = 1.dp)
+                        )
+                    }
                 }
             }
         }

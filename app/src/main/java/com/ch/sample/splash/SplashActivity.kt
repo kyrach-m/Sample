@@ -1,11 +1,14 @@
 package com.ch.sample.splash
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.core.splashscreen.SplashScreen
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.ch.core.common.logger.Logger
+import com.ch.core.ui.theme.AppTheme
 import com.ch.sample.MainActivity
 import com.ch.service.startup.dag.StartupScheduler
 import com.ch.service.startup.monitor.StartupMonitor
@@ -22,7 +25,7 @@ import com.ch.service.startup.monitor.StartupMonitor
  * 设计说明：
  * - 继承 [ComponentActivity]，纯 Compose 技术栈，不依赖 View 体系
  * - 使用 Theme.SplashScreen 官方主题，系统自动处理自适应图标尺寸适配
- * - 本页面无 Compose UI 内容，闪屏界面完全由系统 SplashScreen 主题渲染
+ * - 本页使用 Compose 渲染闪屏 UI（[SplashScreen]），系统 overlay 淡出后 Compose 内容无缝衔接
  * - 启动任务完成后直接跳转 MainActivity，过渡动画由 Compose Navigation 处理
  *
  * 启动流程：
@@ -84,6 +87,14 @@ class SplashActivity : ComponentActivity() {
 
         // 设置闪屏保持可见条件，直到启动任务完成
         splashScreen?.setKeepOnScreenCondition { !isReady }
+
+        // 使用 Compose 渲染闪屏 UI
+        // 系统 splash overlay 淡出后，Compose 内容无缝衔接，避免白屏
+        setContent {
+            AppTheme {
+                SplashScreen()
+            }
+        }
 
         // 记录 Activity 创建时间
         StartupMonitor.endStage(StartupMonitor.Stage.APPLICATION_CREATE)
@@ -161,8 +172,8 @@ class SplashActivity : ComponentActivity() {
     /**
      * 跳转到主页
      *
-     * 使用 FLAG_ACTIVITY_CLEAR_TASK 确保任务栈干净，
-     * SplashScreen 的 fade-out 动画由系统自动处理。
+     * 使用 FLAG_ACTIVITY_CLEAR_TASK 确保任务栈干净。
+     * SplashActivity 立即 finish()，Compose 内容已渲染完成，过渡无缝衔接。
      */
     private fun navigateToMain() {
         StartupMonitor.beginStage(StartupMonitor.Stage.FIRST_FRAME)
@@ -172,9 +183,14 @@ class SplashActivity : ComponentActivity() {
         }
 
         startActivity(intent)
-        finish()
 
-        StartupMonitor.endStage(StartupMonitor.Stage.FIRST_FRAME)
+        // 禁用默认 slide 过渡动画，避免透明窗口过渡期间闪黑/灰
+        @Suppress("DEPRECATION")
+        overridePendingTransition(0, 0)
+
+        // SplashActivity 立即 finish()
+        finish()
+        Logger.d(TAG, "已启动 MainActivity并 finish()")
     }
 
     override fun onDestroy() {

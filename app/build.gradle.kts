@@ -62,6 +62,7 @@ dependencies {
 
     // Middleware
     implementation(project(":middleware:router"))
+    implementation(project(":middleware:permission"))
 
     // Features
     // implementation(project(":features:feature_login")) // removed - use as template for new features

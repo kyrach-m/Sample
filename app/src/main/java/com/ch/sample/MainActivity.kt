@@ -7,9 +7,13 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.Bundle
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
@@ -17,12 +21,13 @@ import com.ch.core.base.BaseComposeActivity
 import com.ch.core.base.navigation.AppNavHost
 import com.ch.core.base.navigation.AppNavigator
 import com.ch.core.base.navigation.Screen
+import com.ch.core.ui.component.GlobalSnackbarHost
 import com.ch.sample.components.ComponentsScreen
-import com.ch.sample.dashboard.DashboardEvent
-import com.ch.sample.dashboard.DashboardScreen
-import com.ch.sample.dashboard.DashboardState
-import com.ch.sample.dashboard.DashboardViewModel
-import com.ch.sample.login.LoginScreen
+import com.ch.sample.components.PermissionDialogHost
+import com.ch.sample.home.DashboardEvent
+import com.ch.sample.home.DashboardScreen
+import com.ch.sample.home.DashboardState
+import com.ch.sample.home.DashboardViewModel
 
 /**
  * 主 Activity（Compose 版本）
@@ -50,10 +55,7 @@ class MainActivity : BaseComposeActivity<DashboardState, DashboardEvent, Dashboa
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-
-        viewModel.loadDashboardData(this)
     }
 
     override fun onResume() {
@@ -71,33 +73,43 @@ class MainActivity : BaseComposeActivity<DashboardState, DashboardEvent, Dashboa
         val navController = rememberNavController()
         val navigator = remember { AppNavigator(navController) }
         val context = LocalContext.current
+        val snackbarHostState = remember { SnackbarHostState() }
 
-        AppNavHost(
-            navController = navController,
-            startDestination = Screen.DASHBOARD,
-            dashboardScreen = {
-                DashboardScreen(
-                    viewModel = viewModel,
-                    onNavigateToComponents = { navigator.navigateToComponents() }
-                )
-            },
-            componentsScreen = {
-                ComponentsScreen()
-            },
-            loginScreen = {
-                LoginScreen(
-                    onLoginSuccess = { navigator.navigateToDashboard() }
-                )
-            }
-        )
-    }
+        // 权限弹窗宿主
+        PermissionDialogHost()
 
-    override fun handleEvent(event: DashboardEvent) {
-        when (event) {
-            is DashboardEvent.AppendLog -> {
-            }
-            is DashboardEvent.ShowMessage -> {
-                showSnackbar(event.message)
+        Box(modifier = Modifier.fillMaxSize()) {
+            AppNavHost(
+                navController = navController,
+                startDestination = Screen.HOME,
+                homeScreen = {
+                    DashboardScreen(
+                        viewModel = viewModel,
+                        onNavigateToComponents = { navigator.navigateToComponents() }
+                    )
+                },
+                componentsScreen = {
+                    ComponentsScreen()
+                }
+            )
+
+            GlobalSnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        // 加载 Dashboard 数据
+        LaunchedEffect(Unit) {
+            viewModel.loadDashboardData(context)
+        }
+
+        // 监听 ViewModel 事件，显示 Snackbar
+        LaunchedEffect(viewModel, snackbarHostState) {
+            viewModel.event.collect { event ->
+                if (event is DashboardEvent.ShowMessage) {
+                    snackbarHostState.showSnackbar(event.message)
+                }
             }
         }
     }

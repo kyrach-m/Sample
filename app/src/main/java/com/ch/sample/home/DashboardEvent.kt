@@ -1,4 +1,4 @@
-package com.ch.sample.dashboard
+﻿package com.ch.sample.home
 
 import com.ch.core.base.event.ViewEvent
 

@@ -46,8 +46,8 @@ object RouterInitializer {
      * **新增模块时，在此添加对应的类名。**
      */
     private val MODULE_INIT_CLASSES = listOf(
-        "com.ch.middleware.router.generated.GeneratedRouterInit_middleware_router",
-        "com.ch.middleware.router.generated.GeneratedRouterInit_feature_login"
+        "com.ch.middleware.router.generated.GeneratedRouterInit_middleware_router"
+        // feature_login 模块已移除，待新增业务模块时在此添加对应的初始化类名
     )
 
     /**

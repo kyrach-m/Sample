@@ -13,8 +13,7 @@ import androidx.navigation.compose.rememberNavController
  */
 object Screen {
     const val SPLASH = "splash"
-    const val LOGIN = "login"
-    const val DASHBOARD = "dashboard"
+    const val HOME = "home"
     const val COMPONENTS = "components"
 }
 
@@ -37,8 +36,7 @@ object Screen {
  * @param navController 导航控制器
  * @param startDestination 起始目的地
  * @param splashScreen 闪屏页 Composable
- * @param loginScreen 登录页 Composable
- * @param dashboardScreen 主页 Composable
+ * @param homeScreen 主页 Composable
  * @param componentsScreen 组件库页 Composable
  */
 @Composable
@@ -46,8 +44,7 @@ fun AppNavHost(
     navController: NavHostController = rememberNavController(),
     startDestination: String = Screen.SPLASH,
     splashScreen: @Composable () -> Unit = {},
-    loginScreen: @Composable () -> Unit = {},
-    dashboardScreen: @Composable () -> Unit = {},
+    homeScreen: @Composable () -> Unit = {},
     componentsScreen: @Composable () -> Unit = {}
 ) {
     NavHost(
@@ -57,11 +54,8 @@ fun AppNavHost(
         composable(Screen.SPLASH) {
             splashScreen()
         }
-        composable(Screen.LOGIN) {
-            loginScreen()
-        }
-        composable(Screen.DASHBOARD) {
-            dashboardScreen()
+        composable(Screen.HOME) {
+            homeScreen()
         }
         composable(Screen.COMPONENTS) {
             componentsScreen()
@@ -78,13 +72,13 @@ fun AppNavHost(
 class AppNavigator(private val navController: NavHostController) {
 
     /**
-     * 导航到 Dashboard 页面
+     * 导航到 Home 页面
      *
-     * 从 Splash 页面跳转到 Dashboard 时，清空返回栈，
+     * 从 Splash 页面跳转到 Home 时，清空返回栈，
      * 防止用户返回到 Splash 页面。
      */
-    fun navigateToDashboard() {
-        navController.navigate(Screen.DASHBOARD) {
+    fun navigateToHome() {
+        navController.navigate(Screen.HOME) {
             popUpTo(Screen.SPLASH) {
                 inclusive = true
             }
