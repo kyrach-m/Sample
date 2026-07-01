@@ -39,14 +39,18 @@ class AppLoggerImpl(
     }
 
     /**
-     * 日期格式化器（Logcat TAG 用）
+     * 日期格式化器（Logcat TAG 用，ThreadLocal 保证线程安全）
      */
-    private val timeFormat = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault())
+    private val timeFormat = ThreadLocal.withInitial {
+        SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault())
+    }
 
     /**
-     * 日期格式化器（文件日志用，完整日期时间）
+     * 日期格式化器（文件日志用，ThreadLocal 保证线程安全）
      */
-    private val fileDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault())
+    private val fileDateFormat = ThreadLocal.withInitial {
+        SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault())
+    }
 
     /**
      * 日志条目数据类
@@ -193,7 +197,7 @@ class AppLoggerImpl(
      * 构建完整 TAG
      */
     private fun buildFullTag(tag: String): String {
-        val time = timeFormat.format(Date())
+        val time = timeFormat.get().format(Date())
         val fullTag = "$time | $tag"
         return if (fullTag.length > MAX_TAG_LENGTH) {
             fullTag.substring(0, MAX_TAG_LENGTH)

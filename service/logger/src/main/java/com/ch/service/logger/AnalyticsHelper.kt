@@ -11,7 +11,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.util.UUID
-import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
  * 事件上报助手
@@ -62,11 +61,6 @@ object AnalyticsHelper {
     private const val KEY_DEVICE_ID = "device_id"
 
     /**
-     * 内存事件队列最大容量（备用缓存）
-     */
-    private const val MAX_QUEUE_SIZE = 1000
-
-    /**
      * 应用 Context
      */
     @SuppressLint("StaticFieldLeak")
@@ -76,11 +70,6 @@ object AnalyticsHelper {
      * 设备唯一标识
      */
     private var deviceId: String = ""
-
-    /**
-     * 内存事件队列（线程安全，作为备用缓存）
-     */
-    private val eventQueue = ConcurrentLinkedQueue<AnalyticsEvent>()
 
     /**
      * 是否已初始化
@@ -128,7 +117,7 @@ object AnalyticsHelper {
      * 1. 采样率判断（通过 [SampleRateManager]）
      * 2. 构建事件（自动补全 timestamp 和 deviceId）
      * 3. 写入 Room 数据库（离线缓存）
-     * 4. 同时加入内存队列（备用）
+     * 4. 触发 WorkManager 批量上传
      *
      * @param eventName 事件名称（如 "button_click"、"page_view"）
      * @param params 事件参数（键值对，可选）
@@ -146,23 +135,6 @@ object AnalyticsHelper {
         }
 
         val timestamp = System.currentTimeMillis()
-
-        // 构建事件
-        val event = AnalyticsEvent(
-            event = eventName,
-            timestamp = timestamp,
-            deviceId = deviceId,
-            params = params.toMutableMap().apply {
-                put("timestamp", timestamp.toString())
-                put("deviceId", deviceId)
-            }
-        )
-
-        // 加入内存队列（备用）
-        eventQueue.offer(event)
-        while (eventQueue.size > MAX_QUEUE_SIZE) {
-            eventQueue.poll()
-        }
 
         // 写入 Room 数据库（离线缓存）
         val entity = PendingEventEntity(
@@ -186,37 +158,11 @@ object AnalyticsHelper {
     }
 
     /**
-     * 获取待上报的事件队列（内存快照）
-     *
-     * @return 事件列表
-     */
-    fun getPendingEvents(): List<AnalyticsEvent> {
-        return eventQueue.toList()
-    }
-
-    /**
-     * 清除已上报的事件（内存队列）
-     *
-     * @param count 要清除的事件数量
-     */
-    fun clearEvents(count: Int) {
-        repeat(count) {
-            eventQueue.poll()
-        }
-        Logger.d(TAG, "已清除 $count 个已上报事件")
-    }
-
-    /**
      * 获取设备 ID
      *
      * @return 设备唯一标识
      */
     fun getDeviceId(): String = deviceId
-
-    /**
-     * 获取内存队列中待上报的事件数量
-     */
-    fun getPendingCount(): Int = eventQueue.size
 
     /**
      * 序列化参数为 JSON 字符串
@@ -226,9 +172,9 @@ object AnalyticsHelper {
      */
     private fun serializeParams(params: Map<String, String>): String {
         if (params.isEmpty()) return "{}"
-        return params.entries.joinToString(",", prefix = "{", postfix = "}") { (key, value) ->
-            "\"$key\":\"${value.replace("\"", "\\\"")}\""
-        }
+        val json = org.json.JSONObject()
+        params.forEach { (key, value) -> json.put(key, value) }
+        return json.toString()
     }
 
     /**
@@ -255,31 +201,6 @@ object AnalyticsHelper {
             "(无参数)"
         } else {
             params.entries.joinToString(", ") { "${it.key}=${it.value}" }
-        }
-    }
-
-    /**
-     * 事件数据类
-     *
-     * @property event 事件名称
-     * @property timestamp 事件发生时间戳（毫秒）
-     * @property deviceId 设备唯一标识
-     * @property params 事件参数
-     */
-    data class AnalyticsEvent(
-        val event: String,
-        val timestamp: Long,
-        val deviceId: String,
-        val params: Map<String, String>
-    ) {
-        /**
-         * 转换为 JSON 格式字符串
-         */
-        fun toJson(): String {
-            val paramsJson = params.entries.joinToString(",") { (key, value) ->
-                "\"$key\":\"$value\""
-            }
-            return """{"event":"$event","timestamp":$timestamp,"device_id":"$deviceId","params":{$paramsJson}}"""
         }
     }
 }

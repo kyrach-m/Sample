@@ -14,6 +14,22 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 /**
+ * 日志加密接口
+ *
+ * 业务层可实现此接口，自定义加密算法（如 AES、ChaCha20）。
+ * 通过 [setEncryption] 注入到 [LogFileManager]。
+ */
+fun interface LogEncryptor {
+    /**
+     * 加密日志内容
+     *
+     * @param plainText 明文日志
+     * @return 加密后的字节数组
+     */
+    fun encrypt(plainText: String): ByteArray
+}
+
+/**
  * 日志文件管理器
  *
  * 负责将日志写入本地文件，支持文件滚动和过期清理。
@@ -67,14 +83,26 @@ class LogFileManager(context: Context) {
     private var writeThread: Thread? = null
 
     /**
-     * 日期格式化器（文件名用）
+     * 日志加密器（可选）
+     *
+     * 设置后，日志写入文件时会先加密。
      */
-    private val fileNameFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
+    @Volatile
+    private var encryptor: LogEncryptor? = null
 
     /**
-     * 日期格式化器（日志内容用）
+     * 日期格式化器（文件名用，ThreadLocal 保证线程安全）
      */
-    private val logContentFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault())
+    private val fileNameFormat = ThreadLocal.withInitial {
+        SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
+    }
+
+    /**
+     * 日期格式化器（日志内容用，ThreadLocal 保证线程安全）
+     */
+    private val logContentFormat = ThreadLocal.withInitial {
+        SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault())
+    }
 
     init {
         logDir = File(context.filesDir, LOG_DIR)
@@ -84,6 +112,19 @@ class LogFileManager(context: Context) {
         currentFile = File(logDir, CURRENT_LOG)
         startWriteThread()
         cleanExpiredLogs()
+    }
+
+    /**
+     * 设置日志加密器
+     *
+     * 设置后，所有写入文件的日志都会先加密。
+     * 导出/压缩的日志也会是加密状态。
+     *
+     * @param encryptor 加密器实现，传 null 取消加密
+     */
+    fun setEncryption(encryptor: LogEncryptor?) {
+        this.encryptor = encryptor
+        Logger.d(TAG, if (encryptor != null) "日志加密已启用" else "日志加密已关闭")
     }
 
     /**
@@ -221,10 +262,21 @@ class LogFileManager(context: Context) {
         }
 
         try {
-            OutputStreamWriter(FileOutputStream(currentFile, true), Charsets.UTF_8).use { writer ->
-                val time = logContentFormat.format(Date(entry.timestamp))
-                writer.write("$time [${entry.level}/${entry.tag}] ${entry.message}\n")
-                writer.flush()
+            val time = logContentFormat.get().format(Date(entry.timestamp))
+            val line = "$time [${entry.level}/${entry.tag}] ${entry.message}\n"
+            val enc = encryptor
+            if (enc != null) {
+                // 加密写入
+                val encrypted = enc.encrypt(line)
+                FileOutputStream(currentFile, true).use { fos ->
+                    fos.write(encrypted)
+                }
+            } else {
+                // 明文写入
+                OutputStreamWriter(FileOutputStream(currentFile, true), Charsets.UTF_8).use { writer ->
+                    writer.write(line)
+                    writer.flush()
+                }
             }
         } catch (e: Exception) {
             Logger.e(TAG, "日志文件写入失败", e)
@@ -240,7 +292,7 @@ class LogFileManager(context: Context) {
     @Synchronized
     private fun rollFile() {
         try {
-            val timestamp = fileNameFormat.format(Date())
+            val timestamp = fileNameFormat.get().format(Date())
             val rolledFile = File(logDir, "app_$timestamp.log")
             if (currentFile.renameTo(rolledFile)) {
                 currentFile = File(logDir, CURRENT_LOG)

@@ -28,6 +28,30 @@ fun interface LogDumper {
 }
 
 /**
+ * Native Crash 处理器接口
+ *
+ * 业务层可实现此接口，注册 Native 信号处理（SIGSEGV、SIGBUS、SIGABRT 等）。
+ * 需要 NDK 环境支持，通常在 C/C++ 层实现信号捕获。
+ *
+ * 通过 [CrashHandler.setNativeCrashHandler] 注入。
+ */
+interface NativeCrashHandler {
+    /**
+     * 注册 Native 信号处理
+     *
+     * 应在应用启动时调用，注册 SIGSEGV、SIGBUS、SIGABRT 等信号处理器。
+     */
+    fun register()
+
+    /**
+     * 获取 Native Crash 日志目录
+     *
+     * @return Native Crash 日志存储目录
+     */
+    fun getNativeCrashDir(): java.io.File?
+}
+
+/**
  * 全局异常捕获处理器
  *
  * 实现 [Thread.UncaughtExceptionHandler]，捕获所有未处理的异常，
@@ -76,6 +100,12 @@ class CrashHandler private constructor(
         private var logDumper: LogDumper? = null
 
         /**
+         * Native Crash 处理器（由外部注入）
+         */
+        @Volatile
+        private var nativeCrashHandler: NativeCrashHandler? = null
+
+        /**
          * 设置日志导出器
          *
          * 在 Application.onCreate 中调用，注入 Logger 的日志导出能力。
@@ -85,6 +115,25 @@ class CrashHandler private constructor(
         fun setLogDumper(dumper: LogDumper?) {
             logDumper = dumper
         }
+
+        /**
+         * 设置 Native Crash 处理器
+         *
+         * 应在 [init] 之后调用。
+         * 业务层实现 [NativeCrashHandler] 接口，注册 Native 信号处理。
+         *
+         * @param handler Native Crash 处理器，传 null 取消
+         */
+        fun setNativeCrashHandler(handler: NativeCrashHandler?) {
+            nativeCrashHandler = handler
+            handler?.register()
+            Logger.d(TAG, "Native Crash Handler 已${if (handler != null) "注册" else "注销"}")
+        }
+
+        /**
+         * 获取 Native Crash 处理器
+         */
+        fun getNativeCrashHandler(): NativeCrashHandler? = nativeCrashHandler
 
         /**
          * 初始化全局异常捕获器
@@ -171,9 +220,11 @@ class CrashHandler private constructor(
         Thread.getDefaultUncaughtExceptionHandler()
 
     /**
-     * 日期格式化器
+     * 日期格式化器（ThreadLocal 保证线程安全）
      */
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss.SSS", Locale.getDefault())
+    private val dateFormat = ThreadLocal.withInitial {
+        SimpleDateFormat("yyyy-MM-dd_HH-mm-ss.SSS", Locale.getDefault())
+    }
 
     /**
      * 异常捕获回调
@@ -245,7 +296,7 @@ class CrashHandler private constructor(
 
         // 时间戳
         sb.appendLine("═══════════════════════════════════════")
-        sb.appendLine("崩溃时间: ${dateFormat.format(Date())}")
+        sb.appendLine("崩溃时间: ${dateFormat.get().format(Date())}")
         sb.appendLine("═══════════════════════════════════════")
 
         // 线程信息
@@ -325,7 +376,7 @@ class CrashHandler private constructor(
                 crashDir.mkdirs()
             }
 
-            val timestamp = dateFormat.format(Date())
+            val timestamp = dateFormat.get().format(Date())
             val logFile = File(crashDir, "crash_$timestamp.log")
 
             logFile.writeText(crashLog)
@@ -340,7 +391,7 @@ class CrashHandler private constructor(
                 if (externalDir != null) {
                     val fallbackDir = File(externalDir, CRASH_DIR)
                     fallbackDir.mkdirs()
-                    val fallbackFile = File(fallbackDir, "crash_${dateFormat.format(Date())}.log")
+                    val fallbackFile = File(fallbackDir, "crash_${dateFormat.get().format(Date())}.log")
                     fallbackFile.writeText(crashLog)
                     Logger.d(TAG, "崩溃日志降级写入外部缓存: ${fallbackFile.absolutePath}")
                     return fallbackFile

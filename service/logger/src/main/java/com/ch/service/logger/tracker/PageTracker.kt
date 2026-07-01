@@ -62,7 +62,7 @@ class PageTracker : Application.ActivityLifecycleCallbacks {
      *
      * 黑名单中的页面不会触发埋点事件。
      */
-    private val blacklist = mutableSetOf<String>()
+    private val blacklist = ConcurrentHashMap.newKeySet<String>()
 
     /**
      * 添加页面到黑名单
