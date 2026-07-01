@@ -29,12 +29,13 @@ import kotlinx.coroutines.launch
  *
  * 用法示例：
  * ```kotlin
- * class MyActivity : BaseActivity<ActivityMyBinding, ...>() {
+ * class MyActivity : ComponentActivity() {
  *
- *     override fun initView(savedInstanceState: Bundle?) {
+ *     override fun onCreate(savedInstanceState: Bundle?) {
+ *         super.onCreate(savedInstanceState)
  *         lifecycleScope.launch {
  *             repeatOnLifecycle(Lifecycle.State.STARTED) {
- *                 currentScreenType.collect { sizeClass ->
+ *                 windowSizeFlow.collect { sizeClass ->
  *                     when (sizeClass) {
  *                         WindowSizeClass.COMPACT -> setupSingleColumn()
  *                         WindowSizeClass.MEDIUM -> setupTwoColumns()

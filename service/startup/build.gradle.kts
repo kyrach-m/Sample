@@ -24,8 +24,6 @@ dependencies {
 
     // 依赖 core 模块
     implementation(project(":core:common"))
-    implementation(project(":core:network"))
-    implementation(project(":core:storage"))
 
     // 依赖 logger 模块（上报启动耗时数据）
     implementation(project(":service:logger"))

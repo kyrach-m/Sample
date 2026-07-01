@@ -46,8 +46,8 @@ object RouterInitializer {
      * **新增模块时，在此添加对应的类名。**
      */
     private val MODULE_INIT_CLASSES = listOf(
-        "com.ch.middleware.router.generated.GeneratedRouterInit_middleware_router",
-        "com.ch.middleware.router.generated.GeneratedRouterInit_feature_login"
+        "com.ch.middleware.router.generated.GeneratedRouterInit_middleware_router"
+        // feature_login 模块已移除，待新增业务模块时在此添加对应的初始化类名
     )
 
     /**
@@ -110,6 +110,33 @@ object RouterInitializer {
         appConfigurator?.configureRoutes()
 
         Logger.d(TAG, "路由模块初始化完成")
+    }
+
+    /**
+     * 检查路由模块是否已初始化
+     *
+     * @return true 表示已初始化
+     */
+    fun isInitialized(): Boolean {
+        return RouterHelper.isInitialized()
+    }
+
+    /**
+     * 获取所有已注册的路由路径列表
+     *
+     * @return 路由路径列表
+     */
+    fun getAllRoutes(): List<String> {
+        return RouterHelper.getAllRoutes()
+    }
+
+    /**
+     * 获取已注册的路由数量
+     *
+     * @return 路由数量
+     */
+    fun getRouteCount(): Int {
+        return RouterHelper.getRouteCount()
     }
 
     /**

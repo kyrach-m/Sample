@@ -97,68 +97,166 @@ object KVStorage {
 
     // ==================== String ====================
 
+    /**
+     * 存储 String 值
+     *
+     * @param key 存储键
+     * @param value 存储值
+     * @param scope 作用域，默认 [Scope.DEFAULT]
+     */
     fun putString(key: String, value: String, scope: Scope = Scope.DEFAULT) {
         getMMKV(scope).encode(key, value)
     }
 
+    /**
+     * 读取 String 值
+     *
+     * @param key 存储键
+     * @param defaultValue 默认值（key 不存在时返回）
+     * @param scope 作用域，默认 [Scope.DEFAULT]
+     * @return 存储值，不存在时返回 [defaultValue]
+     */
     fun getString(key: String, defaultValue: String = "", scope: Scope = Scope.DEFAULT): String {
         return getMMKV(scope).decodeString(key, defaultValue) ?: defaultValue
     }
 
     // ==================== Int ====================
 
+    /**
+     * 存储 Int 值
+     *
+     * @param key 存储键
+     * @param value 存储值
+     * @param scope 作用域，默认 [Scope.DEFAULT]
+     */
     fun putInt(key: String, value: Int, scope: Scope = Scope.DEFAULT) {
         getMMKV(scope).encode(key, value)
     }
 
+    /**
+     * 读取 Int 值
+     *
+     * @param key 存储键
+     * @param defaultValue 默认值（key 不存在时返回）
+     * @param scope 作用域，默认 [Scope.DEFAULT]
+     * @return 存储值，不存在时返回 [defaultValue]
+     */
     fun getInt(key: String, defaultValue: Int = 0, scope: Scope = Scope.DEFAULT): Int {
         return getMMKV(scope).decodeInt(key, defaultValue)
     }
 
     // ==================== Long ====================
 
+    /**
+     * 存储 Long 值
+     *
+     * @param key 存储键
+     * @param value 存储值
+     * @param scope 作用域，默认 [Scope.DEFAULT]
+     */
     fun putLong(key: String, value: Long, scope: Scope = Scope.DEFAULT) {
         getMMKV(scope).encode(key, value)
     }
 
+    /**
+     * 读取 Long 值
+     *
+     * @param key 存储键
+     * @param defaultValue 默认值（key 不存在时返回）
+     * @param scope 作用域，默认 [Scope.DEFAULT]
+     * @return 存储值，不存在时返回 [defaultValue]
+     */
     fun getLong(key: String, defaultValue: Long = 0L, scope: Scope = Scope.DEFAULT): Long {
         return getMMKV(scope).decodeLong(key, defaultValue)
     }
 
     // ==================== Float ====================
 
+    /**
+     * 存储 Float 值
+     *
+     * @param key 存储键
+     * @param value 存储值
+     * @param scope 作用域，默认 [Scope.DEFAULT]
+     */
     fun putFloat(key: String, value: Float, scope: Scope = Scope.DEFAULT) {
         getMMKV(scope).encode(key, value)
     }
 
+    /**
+     * 读取 Float 值
+     *
+     * @param key 存储键
+     * @param defaultValue 默认值（key 不存在时返回）
+     * @param scope 作用域，默认 [Scope.DEFAULT]
+     * @return 存储值，不存在时返回 [defaultValue]
+     */
     fun getFloat(key: String, defaultValue: Float = 0f, scope: Scope = Scope.DEFAULT): Float {
         return getMMKV(scope).decodeFloat(key, defaultValue)
     }
 
     // ==================== Boolean ====================
 
+    /**
+     * 存储 Boolean 值
+     *
+     * @param key 存储键
+     * @param value 存储值
+     * @param scope 作用域，默认 [Scope.DEFAULT]
+     */
     fun putBoolean(key: String, value: Boolean, scope: Scope = Scope.DEFAULT) {
         getMMKV(scope).encode(key, value)
     }
 
+    /**
+     * 读取 Boolean 值
+     *
+     * @param key 存储键
+     * @param defaultValue 默认值（key 不存在时返回）
+     * @param scope 作用域，默认 [Scope.DEFAULT]
+     * @return 存储值，不存在时返回 [defaultValue]
+     */
     fun getBoolean(key: String, defaultValue: Boolean = false, scope: Scope = Scope.DEFAULT): Boolean {
         return getMMKV(scope).decodeBool(key, defaultValue)
     }
 
     // ==================== 删除 / 清空 ====================
 
+    /**
+     * 删除指定 key 的数据
+     *
+     * @param key 存储键
+     * @param scope 作用域，默认 [Scope.DEFAULT]
+     */
     fun remove(key: String, scope: Scope = Scope.DEFAULT) {
         getMMKV(scope).removeValueForKey(key)
     }
 
+    /**
+     * 清空指定作用域的所有数据
+     *
+     * @param scope 作用域，默认 [Scope.DEFAULT]
+     */
     fun clear(scope: Scope = Scope.DEFAULT) {
         getMMKV(scope).clearAll()
     }
 
+    /**
+     * 清空所有作用域的数据
+     *
+     * 遍历所有 [Scope] 并逐一清空。
+     */
     fun clearAll() {
         Scope.values().forEach { clear(it) }
     }
 
+    /**
+     * 检查指定作用域中是否包含指定 key
+     *
+     * @param key 存储键
+     * @param scope 作用域，默认 [Scope.DEFAULT]
+     * @return true = 包含该 key
+     */
     fun contains(key: String, scope: Scope = Scope.DEFAULT): Boolean {
         return getMMKV(scope).containsKey(key)
     }

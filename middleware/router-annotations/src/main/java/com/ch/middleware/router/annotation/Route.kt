@@ -9,7 +9,7 @@ package com.ch.middleware.router.annotation
  * 使用示例：
  * ```kotlin
  * @Route(path = "/settings/ProfileActivity", description = "个人信息页")
- * class ProfileActivity : AppCompatActivity()
+ * class ProfileActivity : ComponentActivity()
  * ```
  *
  * @property path 路由路径，格式为 "/模块/页面名"，必须全局唯一

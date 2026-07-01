@@ -1,15 +1,10 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- 应用主题（夜间模式，继承自 core:ui 的 AppTheme） -->
-    <style name="Theme.Sample" parent="AppTheme">
-        <!-- 关键修复：设置为与布局背景一致的颜色，消除跳转白闪 -->
-        <item name="android:windowBackground">?attr/colorSurface</item>
-
-        <!-- Material 3 颜色（防止布局引用时崩溃） -->
-        <item name="colorTertiary">@color/colorTertiary</item>
-        <item name="colorSecondary">@color/colorSecondary</item>
-        <item name="colorOnSecondary">@color/colorOnSecondary</item>
-        <item name="colorError">@color/colorError</item>
-        <item name="colorOnError">@color/colorOnError</item>
-        <item name="colorOutline">@color/colorOutline</item>
+    <!-- 应用主题（夜间模式） -->
+    <style name="Theme.Sample" parent="@android:style/Theme.Material.NoActionBar">
+        <!-- 窗口背景色匹配 Compose 暗色主题，避免过渡期间黑屏 -->
+        <item name="android:windowBackground">@color/window_background_light</item>
+        <!-- 状态栏透明，配合 Compose enableEdgeToEdge() -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
 </resources>

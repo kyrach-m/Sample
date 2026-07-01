@@ -84,6 +84,52 @@ object StartupMonitor {
     private var isComplete = false
 
     /**
+     * 各阶段性能基线（毫秒）
+     *
+     * Key: 启动阶段
+     * Value: 基线阈值（超过此值会告警）
+     */
+    private val stageBaselines = mutableMapOf<Stage, Long>()
+
+    /**
+     * 总启动耗时基线（毫秒）
+     */
+    private var totalBaseline: Long = 0L
+
+    /**
+     * 启动性能告警回调
+     */
+    @Volatile
+    private var degradationListener: DegradationListener? = null
+
+    /**
+     * 设置启动性能基线
+     *
+     * 当启动耗时超过基线时，会触发告警。
+     *
+     * @param totalMs 总启动耗时基线（毫秒）
+     * @param stageBaselines 各阶段基线（可选）
+     */
+    fun setBaseline(totalMs: Long, stageBaselines: Map<Stage, Long> = emptyMap()) {
+        synchronized(this) {
+            totalBaseline = totalMs
+            this.stageBaselines.putAll(stageBaselines)
+            Logger.d(TAG, "启动基线已设置: 总计 ${totalMs}ms, 阶段: ${stageBaselines.size} 个")
+        }
+    }
+
+    /**
+     * 设置启动性能告警回调
+     *
+     * @param listener 告警回调
+     */
+    fun setDegradationListener(listener: DegradationListener?) {
+        synchronized(this) {
+            degradationListener = listener
+        }
+    }
+
+    /**
      * 记录进程启动时间
      *
      * 应在 Application 构造方法中尽早调用。
@@ -136,6 +182,7 @@ object StartupMonitor {
             if (stageDurations.size == Stage.entries.size) {
                 isComplete = true
                 printReport()
+                checkDegradation()
             }
         }
     }
@@ -218,5 +265,50 @@ object StartupMonitor {
             processStartTime = 0L
             isComplete = false
         }
+    }
+
+    /**
+     * 检查启动性能劣化
+     *
+     * 当总耗时或某阶段耗时超过基线时，记录告警并通知回调。
+     */
+    private fun checkDegradation() {
+        if (totalBaseline <= 0L && stageBaselines.isEmpty()) return
+
+        val totalDuration = stageDurations.values.sum()
+        val warnings = mutableListOf<String>()
+
+        // 检查总耗时
+        if (totalBaseline > 0L && totalDuration > totalBaseline) {
+            val excess = totalDuration - totalBaseline
+            warnings.add("总启动耗时 ${totalDuration}ms 超过基线 ${totalBaseline}ms (+${excess}ms)")
+        }
+
+        // 检查各阶段
+        stageBaselines.forEach { (stage, baseline) ->
+            val duration = stageDurations[stage] ?: return@forEach
+            if (duration > baseline) {
+                val excess = duration - baseline
+                warnings.add("${stage.description} 耗时 ${duration}ms 超过基线 ${baseline}ms (+${excess}ms)")
+            }
+        }
+
+        if (warnings.isNotEmpty()) {
+            Logger.w(TAG, "⚠️ 启动性能劣化告警:\n${warnings.joinToString("\n")}")
+            degradationListener?.onDegradation(warnings, totalDuration)
+        }
+    }
+
+    /**
+     * 启动性能劣化告警回调
+     */
+    fun interface DegradationListener {
+        /**
+         * 启动性能劣化时调用
+         *
+         * @param warnings 告警信息列表
+         * @param totalDuration 总启动耗时（毫秒）
+         */
+        fun onDegradation(warnings: List<String>, totalDuration: Long)
     }
 }

@@ -1,40 +1,26 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- 应用主题（继承自 core:ui 的 AppTheme，确保统一设计规范） -->
-    <style name="Theme.Sample" parent="AppTheme">
-        <!-- 关键修复：设置为与布局背景一致的颜色，消除跳转白闪 -->
-        <item name="android:windowBackground">?attr/colorSurface</item>
+    <!--
+        应用基础主题（纯 Compose 技术栈）
+        继承自框架 Theme.Material.Light，仅提供 Activity 窗口基本属性。
+        实际 UI 颜色由 Compose AppTheme 控制，XML 主题不影响 Compose 渲染。
+    -->
+    <style name="Theme.Sample" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <!-- 窗口背景色匹配 Compose 主题，避免过渡期间黑屏 -->
+        <item name="android:windowBackground">@color/window_background_light</item>
+        <!-- 状态栏透明，配合 Compose enableEdgeToEdge() -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
 
-        <!-- Material 3 颜色属性（防止布局引用时崩溃） -->
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorOnPrimary">@color/colorOnPrimary</item>
-        <item name="colorSurface">@color/colorSurface</item>
-        <item name="colorOnSurface">@color/colorOnSurface</item>
-        <item name="colorOnSurfaceVariant">@color/colorOnSurfaceVariant</item>
-        <item name="colorTertiary">@color/colorTertiary</item>
-        <item name="colorSecondary">@color/colorSecondary</item>
-        <item name="colorOnSecondary">@color/colorOnSecondary</item>
-        <item name="colorError">@color/colorError</item>
-        <item name="colorOnError">@color/colorOnError</item>
-        <item name="colorOutline">@color/colorOutline</item>
-        <item name="colorSecondaryContainer">@color/colorSecondaryContainer</item>
-        <item name="colorOnSecondaryContainer">@color/colorOnSecondaryContainer</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
 
     <!--
         闪屏页主题
-
-        使用 androidx.core:core-splashscreen 官方库，系统自动处理自适应图标尺寸适配，
-        解决 windowBackground 渲染自适应图标时无法正确约束尺寸的问题。
+        使用 androidx.core:core-splashscreen 官方库，系统自动处理自适应图标尺寸适配。
     -->
     <style name="Theme.Splash" parent="Theme.SplashScreen">
-        <!-- 背景色 -->
         <item name="windowSplashScreenBackground">@color/splash_background</item>
-        <!-- 图标（系统自动适配尺寸，不会放大） -->
         <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
-        <!-- 图标动画持续时间 -->
         <item name="windowSplashScreenAnimationDuration">300</item>
-        <!-- 启动完成后切换到的主题 -->
         <item name="postSplashScreenTheme">@style/Theme.Sample</item>
     </style>
-
 </resources>

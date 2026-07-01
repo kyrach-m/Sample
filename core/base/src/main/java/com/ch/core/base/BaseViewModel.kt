@@ -108,6 +108,8 @@ abstract class BaseViewModel<State, Event : ViewEvent>(
      * 捕获未处理异常，记录日志
      */
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        onError(throwable.message ?: "Unknown error")
+        onSendToastEvent(throwable.message ?: "Unknown error")
         onException(throwable)
     }
 
@@ -125,6 +127,8 @@ abstract class BaseViewModel<State, Event : ViewEvent>(
             try {
                 block()
             } catch (e: Exception) {
+                onError(e.message ?: "Unknown error")
+                onSendToastEvent(e.message ?: "Unknown error")
                 onException(e)
             }
         }

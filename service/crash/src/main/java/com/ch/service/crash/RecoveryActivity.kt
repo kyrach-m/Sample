@@ -1,233 +1,303 @@
 package com.ch.service.crash
 
-import android.annotation.SuppressLint
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.ch.core.common.util.AppUtil
 import com.ch.core.common.logger.Logger
-import android.view.Gravity
-import android.widget.Button
-import android.widget.FrameLayout
-import android.widget.LinearLayout
-import android.widget.ProgressBar
-import android.widget.ScrollView
-import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
+import kotlinx.coroutines.delay
 
 /**
- * 崩溃恢复页面 Activity
+ * 崩溃恢复页面（Compose 实现）
  *
- * 当应用发生崩溃后，由 [CrashHandler] 启动。
- * 显示"应用正在恢复，请稍候..."的提示界面，
- * 同时展示脱敏后的错误摘要，为用户提供"反馈错误"的入口。
+ * 功能：
+ * - 展示崩溃摘要信息（错误类型、错误消息）
+ * - 提供"重启应用"和"反馈问题"按钮
+ * - 60 秒无操作自动结束进程
  *
  * 设计说明：
- * - 运行在独立进程（:recovery），确保主进程崩溃后仍可显示
- * - 使用纯代码构建 UI（不依赖布局文件），避免资源加载失败
- * - 界面包含：ProgressBar + 提示文字 + 错误摘要 + 反馈按钮
- * - 不可返回（禁用返回键）
- * - 2 秒后自动杀死进程，系统会自动回收资源
- *
- * 接收参数：
- * - [EXTRA_ERROR_SUMMARY]：脱敏后的错误摘要字符串
- *
- * 用户体验：
- * - 崩溃后不会显示系统强制关闭对话框
- * - 用户看到的是友好的恢复提示 + 错误摘要
- * - 可点击"反馈错误"按钮（当前为 Toast 提示，业务层可对接反馈系统）
- * - 2 秒后进程被杀死，用户回到桌面或上一次使用的页面
+ * - 使用 Compose 渲染，与项目纯 Compose 技术栈保持一致
+ * - 运行在独立进程（:recovery），不依赖主进程状态
+ * - 使用 Material3 自定义配色，不依赖系统主题
  */
-@SuppressLint("CustomSplashScreen")
-class RecoveryActivity : AppCompatActivity() {
-
-    companion object {
-        private const val TAG = "RecoveryActivity"
-
-        /**
-         * 恢复页面显示时间（毫秒）
-         */
-        private const val RECOVERY_DISPLAY_MS = 2000L
-
-        /**
-         * Intent 参数：错误摘要
-         */
-        const val EXTRA_ERROR_SUMMARY = "extra_error_summary"
-    }
-
-    /**
-     * 定时处理器
-     */
-    private val handler = Handler(Looper.getMainLooper())
-
-    /**
-     * 错误摘要文本
-     */
-    private var errorSummary: String = ""
-
-    /**
-     * 延迟杀死进程的任务
-     */
-    private val killProcessRunnable = Runnable {
-        Logger.d(TAG, "恢复时间结束，杀死进程")
-        android.os.Process.killProcess(android.os.Process.myPid())
-        System.exit(0)
-    }
+class RecoveryActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Logger.d(TAG, "RecoveryActivity 创建（进程: ${android.os.Process.myPid()}）")
+        val errorSummary = intent.getStringExtra(EXTRA_ERROR_SUMMARY) ?: "未知错误"
 
-        // 接收错误摘要
-        errorSummary = intent?.getStringExtra(EXTRA_ERROR_SUMMARY) ?: ""
-
-        // 纯代码构建 UI
-        buildRecoveryUI()
-
-        // 延迟 2 秒后杀死进程
-        handler.postDelayed(killProcessRunnable, RECOVERY_DISPLAY_MS)
-    }
-
-    /**
-     * 构建恢复页面 UI
-     *
-     * 使用纯代码创建布局：
-     * - LinearLayout（垂直）作为根布局
-     * - 居中显示 ProgressBar + 提示文字 + 错误摘要 + 反馈按钮
-     */
-    private fun buildRecoveryUI() {
-        // 根布局（垂直线性布局）
-        val rootLayout = LinearLayout(this).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT
+        setContent {
+            val colorScheme = lightColorScheme(
+                primary = Color(0xFF1976D2),
+                onPrimary = Color.White,
+                secondary = Color(0xFF6B7280),
+                onSecondary = Color.White,
+                background = Color(0xFFF9FAFB),
+                onBackground = Color(0xFF111827),
+                surface = Color.White,
+                onSurface = Color(0xFF111827),
+                error = Color(0xFFDC2626),
+                errorContainer = Color(0xFFFEE2E2),
+                onSurfaceVariant = Color(0xFF6B7280)
             )
-            setBackgroundColor(0xFFFAFAFA.toInt())
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            setPadding(48, 48, 48, 48)
-        }
 
-        // 进度条
-        val progressBar = ProgressBar(this).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                gravity = Gravity.CENTER_HORIZONTAL
+            MaterialTheme(colorScheme = colorScheme) {
+                RecoveryScreen(
+                    errorSummary = errorSummary,
+                    onRestart = { restartApp() },
+                    onFeedback = { openFeedback(errorSummary) },
+                    onTimeout = { finish() }
+                )
             }
         }
-
-        // 主提示文字
-        val mainText = TextView(this).apply {
-            text = "应用正在恢复，请稍候..."
-            textSize = 18f
-            setTextColor(0xFF333333.toInt())
-            gravity = Gravity.CENTER
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                topMargin = 32
-            }
-        }
-
-        // 副提示文字
-        val subText = TextView(this).apply {
-            text = "应用即将自动重启"
-            textSize = 14f
-            setTextColor(0xFF999999.toInt())
-            gravity = Gravity.CENTER
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                topMargin = 12
-            }
-        }
-
-        // 错误摘要区域（如果有）
-        val errorLayout = if (errorSummary.isNotEmpty()) {
-            LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply {
-                    topMargin = 48
-                }
-                setBackgroundColor(0xFFF5F5F5.toInt())
-                setPadding(24, 16, 24, 16)
-
-                // 标题
-                val title = TextView(this@RecoveryActivity).apply {
-                    text = "错误信息："
-                    textSize = 13f
-                    setTextColor(0xFF666666.toInt())
-                }
-                addView(title)
-
-                // 错误摘要（可滚动）
-                val errorText = TextView(this@RecoveryActivity).apply {
-                    text = errorSummary
-                    textSize = 12f
-                    setTextColor(0xFFCC3333.toInt())
-                    maxLines = 5
-                    layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                    ).apply {
-                        topMargin = 8
-                    }
-                }
-                addView(errorText)
-            }
-        } else null
-
-        // 反馈按钮
-        val feedbackButton = Button(this).apply {
-            text = "反馈错误"
-            textSize = 14f
-            setTextColor(0xFFFFFFFF.toInt())
-            setBackgroundColor(0xFF4CAF50.toInt())
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                topMargin = 32
-                gravity = Gravity.CENTER_HORIZONTAL
-            }
-            setOnClickListener {
-                // 业务层可在此对接反馈系统
-                // 当前仅做 Toast 提示
-                android.widget.Toast.makeText(
-                    this@RecoveryActivity,
-                    "感谢您的反馈，我们会尽快修复此问题",
-                    android.widget.Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
-
-        // 组装布局
-        rootLayout.addView(progressBar)
-        rootLayout.addView(mainText)
-        rootLayout.addView(subText)
-        errorLayout?.let { rootLayout.addView(it) }
-        rootLayout.addView(feedbackButton)
-
-        setContentView(rootLayout)
     }
 
-    /**
-     * 禁用返回键
-     */
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        // 不执行任何操作，禁用返回键
+    private fun restartApp() {
+        try {
+            val intent = packageManager.getLaunchIntentForPackage(packageName)
+            if (intent != null) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                startActivity(intent)
+            }
+        } catch (e: Exception) {
+            Logger.e(TAG, "重启应用失败: ${e.message}")
+        }
+        finish()
+        android.os.Process.killProcess(android.os.Process.myPid())
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        handler.removeCallbacks(killProcessRunnable)
+    private fun openFeedback(errorSummary: String) {
+        try {
+            val intent = Intent(Intent.ACTION_SENDTO).apply {
+                data = android.net.Uri.parse("mailto:")
+                putExtra(Intent.EXTRA_SUBJECT, "应用崩溃反馈")
+                putExtra(
+                    Intent.EXTRA_TEXT,
+                    "=== 崩溃信息 ===\n$errorSummary\n\n=== 用户描述 ===\n（请在此处描述操作步骤）"
+                )
+            }
+            startActivity(Intent.createChooser(intent, "选择反馈方式"))
+        } catch (e: Exception) {
+            Logger.e(TAG, "打开反馈失败: ${e.message}")
+        }
     }
+
+    companion object {
+        private const val TAG = "RecoveryActivity"
+        const val EXTRA_ERROR_SUMMARY = "extra_error_summary"
+    }
+}
+
+// ─────────────────────────────────────────────
+// Compose UI
+// ─────────────────────────────────────────────
+
+@Composable
+private fun RecoveryScreen(
+    errorSummary: String,
+    onRestart: () -> Unit,
+    onFeedback: () -> Unit,
+    onTimeout: () -> Unit
+) {
+    val context = LocalContext.current
+    val parsedFields = remember { parseErrorSummary(errorSummary) }
+    val appName = remember {
+        context.applicationInfo.loadLabel(context.packageManager).toString()
+    }
+    val appVersion = remember { AppUtil.getVersionName(context) }
+
+    // 60秒无操作自动结束
+    LaunchedEffect(Unit) {
+        delay(60_000L)
+        onTimeout()
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(48.dp))
+
+            // 警告图标（圆形背景 + 感叹号，避免依赖 Material Icons Extended）
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "!",
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Text(
+                text = "应用遇到了问题",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "我们已记录了错误信息，您可以重启应用或反馈问题",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            // 崩溃信息卡片
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .padding(16.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    InfoRow(label = "应用", value = appName)
+                    InfoRow(label = "版本", value = appVersion)
+                    parsedFields["type"]?.let { InfoRow(label = "错误类型", value = it) }
+                    parsedFields["message"]?.let { InfoRow(label = "错误消息", value = it) }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(36.dp))
+
+            Button(
+                onClick = onRestart,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text(
+                    text = "重启应用",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Button(
+                onClick = onFeedback,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondary
+                )
+            ) {
+                Text(
+                    text = "反馈问题",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSecondary
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "$appName v$appVersion",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun InfoRow(label: String, value: String) {
+    Column {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodySmall,
+            fontFamily = FontFamily.Monospace,
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 12.sp
+        )
+    }
+}
+
+/**
+ * 解析错误摘要
+ *
+ * 格式：`ExceptionType: message`
+ */
+private fun parseErrorSummary(summary: String): Map<String, String> {
+    val result = mutableMapOf<String, String>()
+    val colonIndex = summary.indexOf(": ")
+    if (colonIndex > 0) {
+        result["type"] = summary.substring(0, colonIndex)
+        result["message"] = summary.substring(colonIndex + 2)
+    } else {
+        result["message"] = summary
+    }
+    return result
 }

@@ -1,26 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 基础色（core:ui 已定义主色系，此处仅保留 app 专属颜色） -->
+    <!-- 基础色 -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="transparent">#00000000</color>
 
-    <!-- 闪屏页背景色（与 core:ui 的 primary 一致，单独定义方便主题引用） -->
+    <!-- 闪屏页背景色（Theme.Splash 引用） -->
     <color name="splash_background">#FF1976D2</color>
 
-    <!-- Material 3 颜色（防止布局引用时崩溃） -->
-    <color name="colorPrimary">#FF1976D2</color>
-    <color name="colorOnPrimary">#FFFFFFFF</color>
-    <color name="colorSurface">#FFFFFFFF</color>
-    <color name="colorOnSurface">#FF1C1B1F</color>
-    <color name="colorOnSurfaceVariant">#FF49454F</color>
+    <!-- Drawable / Launcher 图标引用色 -->
     <color name="orange_500">#FFF59E0B</color>
-    <color name="colorTertiary">#FF7CB342</color>
-    <color name="colorSecondary">#FF625B71</color>
-    <color name="colorOnSecondary">#FFFFFFFF</color>
-    <color name="colorError">#FFB3261E</color>
-    <color name="colorOnError">#FFFFFFFF</color>
-    <color name="colorOutline">#FFCAC4D0</color>
-    <color name="colorSecondaryContainer">#FFE8DEF8</color>
-    <color name="colorOnSecondaryContainer">#FF1E192B</color>
+    <color name="colorPrimary">#FF1976D2</color>
+
+    <!-- Compose 主题背景色（XML 窗口过渡期使用，避免黑屏） -->
+    <color name="window_background_light">#FFFFFBFE</color>
 </resources>

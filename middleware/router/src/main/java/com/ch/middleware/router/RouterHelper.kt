@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import com.ch.core.common.logger.Logger
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * 路由助手（商业级增强版）
@@ -58,18 +59,24 @@ object RouterHelper {
 
     /**
      * 路由表：路径 → Activity 类
+     *
+     * 使用 [ConcurrentHashMap] 保证多线程注册/查询的线程安全。
      */
-    private val routeTable = mutableMapOf<String, Class<out Activity>>()
+    private val routeTable = ConcurrentHashMap<String, Class<out Activity>>()
 
     /**
      * V1 路由拦截器列表（同步，简单拦截）
+     *
+     * 使用 [CopyOnWriteArrayList] 保证读操作无锁、写操作线程安全。
      */
-    private val interceptors = mutableListOf<RouteInterceptor>()
+    private val interceptors = java.util.concurrent.CopyOnWriteArrayList<RouteInterceptor>()
 
     /**
      * V2 路由拦截器列表（异步回调链，按优先级排序）
+     *
+     * 使用 [CopyOnWriteArrayList] 保证读操作无锁、写操作线程安全。
      */
-    private val interceptorsV2 = mutableListOf<RouteInterceptorV2>()
+    private val interceptorsV2 = java.util.concurrent.CopyOnWriteArrayList<RouteInterceptorV2>()
 
     /**
      * 路径重写服务
@@ -96,6 +103,12 @@ object RouterHelper {
     private var routeCount = 0
 
     /**
+     * 是否已初始化
+     */
+    @Volatile
+    private var isInitialized = false
+
+    /**
      * 初始化 RouterHelper
      *
      * 必须在 Application.onCreate 中调用。
@@ -104,7 +117,26 @@ object RouterHelper {
      */
     fun init(context: Context) {
         appContext = context.applicationContext
+        isInitialized = true
         Logger.d(TAG, "RouterHelper 初始化完成")
+    }
+
+    /**
+     * 检查是否已初始化
+     *
+     * @return true 表示已初始化
+     */
+    fun isInitialized(): Boolean {
+        return isInitialized && appContext != null
+    }
+
+    /**
+     * 获取所有已注册的路由路径列表
+     *
+     * @return 路由路径列表
+     */
+    fun getAllRoutes(): List<String> {
+        return routeTable.keys.sorted()
     }
 
     /**
@@ -265,7 +297,9 @@ object RouterHelper {
      * 获取所有已注册的路由路径
      *
      * @return 路由路径集合
+     * @deprecated 请使用 [getAllRoutes]，返回已排序的路径列表
      */
+    @Deprecated("使用 getAllRoutes() 代替", ReplaceWith("getAllRoutes()"))
     fun getRegisteredRoutes(): Set<String> = routeTable.keys.toSet()
 
     /**
@@ -288,6 +322,100 @@ object RouterHelper {
         }
         sb.appendLine("========================================")
         return sb.toString()
+    }
+
+    // ==================== Debug 调试面板 ====================
+
+    /**
+     * 获取路由模块完整调试信息
+     *
+     * 包含路由表、拦截器链、服务配置等全部信息，
+     * 用于 Debug 模式下的路由调试面板展示。
+     *
+     * @return 格式化的调试信息字符串
+     */
+    fun getDebugInfo(): String {
+        val sb = StringBuilder()
+        sb.appendLine("╔══════════════════════════════════════╗")
+        sb.appendLine("║         Router Debug Panel           ║")
+        sb.appendLine("╠══════════════════════════════════════╣")
+
+        // 基本信息
+        sb.appendLine("║ 初始化状态: ${if (isInitialized) "✅ 已初始化" else "❌ 未初始化"}")
+        sb.appendLine("║ 路由数量: $routeCount")
+        sb.appendLine("║ V1 拦截器: ${interceptors.size} 个")
+        sb.appendLine("║ V2 拦截器: ${interceptorsV2.size} 个")
+        sb.appendLine("║ 路径重写: ${if (pathReplaceService != null) "✅ 已设置" else "❌ 未设置"}")
+        sb.appendLine("║ 降级服务: ${if (degradeService != null) "✅ 已设置" else "❌ 未设置"}")
+        sb.appendLine("╠══════════════════════════════════════╣")
+
+        // 路由表
+        sb.appendLine("║ 📍 路由表:")
+        routeTable.entries.sortedBy { it.key }.forEach { (path, clazz) ->
+            sb.appendLine("║   $path → ${clazz.simpleName}")
+        }
+        sb.appendLine("╠══════════════════════════════════════╣")
+
+        // 拦截器链
+        sb.appendLine("║ 🔗 拦截器链 (按优先级排序):")
+        interceptorsV2.forEachIndexed { index, interceptor ->
+            sb.appendLine("║   [${index + 1}] ${interceptor.name} (priority=${interceptor.priority})")
+        }
+        sb.appendLine("╠══════════════════════════════════════╣")
+
+        // Deep Link 映射
+        val deepLinkMappings = DeepLinkHandler.getAllMappings()
+        sb.appendLine("║ 🔗 Deep Link 映射: ${deepLinkMappings.size} 条")
+        deepLinkMappings.forEach { (uriPath, routePath) ->
+            sb.appendLine("║   $uriPath → $routePath")
+        }
+
+        sb.appendLine("╚══════════════════════════════════════╝")
+        return sb.toString()
+    }
+
+    /**
+     * 获取拦截器链信息
+     *
+     * @return 拦截器列表，每项包含名称和优先级
+     */
+    fun getInterceptorChainInfo(): List<Pair<String, Int>> {
+        return interceptorsV2.map { it.name to it.priority }
+    }
+
+    /**
+     * 路由健康检查
+     *
+     * 检查所有已注册路由的有效性：
+     * - Activity 类是否可访问
+     * - 路由路径格式是否规范
+     *
+     * @return 检查结果列表，空列表表示全部健康
+     */
+    fun checkRouteHealth(): List<String> {
+        val issues = mutableListOf<String>()
+
+        routeTable.forEach { (path, clazz) ->
+            // 检查路径格式
+            if (!path.startsWith("/")) {
+                issues.add("路径格式不规范（应以 / 开头）: $path → ${clazz.simpleName}")
+            }
+
+            // 检查 Activity 类是否可访问
+            try {
+                clazz.getDeclaredConstructor()
+            } catch (e: Exception) {
+                issues.add("Activity 类无法实例化: $path → ${clazz.name}")
+            }
+        }
+
+        // 检查重复路径（理论上 ConcurrentHashMap 不会重复，但保留检查）
+        val pathGroups = routeTable.keys.groupBy { it.lowercase() }
+        pathGroups.filter { it.value.size > 1 }.forEach { (_, paths) ->
+            issues.add("存在大小写不同的重复路径: $paths")
+        }
+
+        return issues
     }
 
     /**
@@ -343,6 +471,7 @@ object RouterHelper {
         return performNavigation(context, targetClass, path, params, flags, requestCode)
     }
 
+
     /**
      * 执行 V2 拦截器链
      *
@@ -372,7 +501,9 @@ object RouterHelper {
                     path = postcard.path,
                     params = postcard.extras,
                     flags = flags,
-                    requestCode = requestCode
+                    requestCode = requestCode,
+                    enterAnim = postcard.enterAnim,
+                    exitAnim = postcard.exitAnim
                 )
                 return
             }
@@ -398,6 +529,9 @@ object RouterHelper {
 
     /**
      * 执行实际的页面跳转
+     *
+     * @param enterAnim 进入动画资源 ID（0 表示无动画）
+     * @param exitAnim 退出动画资源 ID（0 表示无动画）
      */
     private fun performNavigation(
         context: Context,
@@ -405,7 +539,9 @@ object RouterHelper {
         path: String,
         params: Bundle?,
         flags: Int,
-        requestCode: Int
+        requestCode: Int,
+        enterAnim: Int = 0,
+        exitAnim: Int = 0
     ): Boolean {
         return try {
             val intent = Intent(context, targetClass)
@@ -424,6 +560,12 @@ object RouterHelper {
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
                 context.startActivity(intent)
+            }
+
+            // 应用过渡动画
+            if (context is Activity && (enterAnim != 0 || exitAnim != 0)) {
+                @Suppress("DEPRECATION")
+                context.overridePendingTransition(enterAnim, exitAnim)
             }
 
             Logger.d(TAG, "路由跳转成功: $path → ${targetClass.simpleName}")

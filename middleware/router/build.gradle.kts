@@ -24,7 +24,6 @@ ksp {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
 
     // 路由注解定义（纯 Kotlin 模块）
     api(project(":middleware:router-annotations"))

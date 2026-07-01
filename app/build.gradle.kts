@@ -1,5 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.compose.compiler)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -39,7 +41,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     buildFeatures {
-        viewBinding = true
+        compose = true
         buildConfig = true
     }
 }
@@ -60,15 +62,27 @@ dependencies {
 
     // Middleware
     implementation(project(":middleware:router"))
+    implementation(project(":middleware:permission"))
 
     // Features
     // implementation(project(":features:feature_login")) // removed - use as template for new features
 
     // AndroidX
-    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.splashscreen)
-    implementation(libs.material)
+
+    // Compose
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.ui.tooling)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material3.window.size)
+    implementation(libs.androidx.compose.navigation)
+    implementation(libs.androidx.compose.lifecycle.viewmodel)
+    implementation(libs.androidx.compose.activity)
+    implementation(libs.androidx.compose.runtime.livedata)
 
     // Lifecycle
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -82,6 +96,9 @@ dependencies {
 
     // WorkManager
     implementation(libs.androidx.work.runtime)
+
+    // KSP - Router
+    ksp(project(":middleware:router-compiler"))
 
     // Test
     testImplementation(libs.junit)

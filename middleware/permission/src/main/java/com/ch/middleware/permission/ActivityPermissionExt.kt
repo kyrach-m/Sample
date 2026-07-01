@@ -12,7 +12,7 @@ import androidx.lifecycle.LifecycleOwner
  *
  * 使用示例：
  * ```kotlin
- * class MyActivity : AppCompatActivity() {
+ * class MyActivity : ComponentActivity() {
  *
  *     // 方式一：使用扩展属性（推荐）
  *     private val permissions by permissionDelegate()
@@ -37,7 +37,7 @@ import androidx.lifecycle.LifecycleOwner
  *
  * ```kotlin
  * // 方式二：在协程中使用
- * class MyActivity : AppCompatActivity() {
+ * class MyActivity : ComponentActivity() {
  *     private val permissions by permissionDelegate()
  *
  *     fun checkPermission() {

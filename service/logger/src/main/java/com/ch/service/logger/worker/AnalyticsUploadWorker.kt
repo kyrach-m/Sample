@@ -16,6 +16,22 @@ import com.ch.service.logger.db.PendingEventEntity
 import java.util.concurrent.TimeUnit
 
 /**
+ * 埋点事件上传接口
+ *
+ * 业务层实现此接口，将事件发送到后端 API。
+ * 通过 [AnalyticsUploadWorker.setUploader] 注入。
+ */
+fun interface EventUploader {
+    /**
+     * 批量上传事件
+     *
+     * @param events 待上传的事件列表
+     * @return true=上传成功，false=上传失败
+     */
+    suspend fun upload(events: List<com.ch.service.logger.db.PendingEventEntity>): Boolean
+}
+
+/**
  * 埋点事件上传 Worker
  *
  * 使用 WorkManager 实现后台批量上传埋点事件。
@@ -62,6 +78,24 @@ class AnalyticsUploadWorker(
          * 每批上传最大事件数
          */
         private const val BATCH_SIZE = 50
+
+        /**
+         * 事件上传器（由业务层注入）
+         */
+        @Volatile
+        private var uploader: EventUploader? = null
+
+        /**
+         * 设置事件上传器
+         *
+         * 应在 [enqueue] 之前调用。
+         *
+         * @param eventUploader 上传器实现
+         */
+        fun setUploader(eventUploader: EventUploader?) {
+            uploader = eventUploader
+            Logger.d(TAG, "事件上传器已${if (eventUploader != null) "注入" else "注销"}")
+        }
 
         /**
          * 注册定期上传任务
@@ -122,7 +156,13 @@ class AnalyticsUploadWorker(
             Logger.d(TAG, "读取到 ${events.size} 条待上报事件")
 
             // 3. 批量上传
-            val success = uploadEvents(events)
+            val eventUploader = uploader
+            if (eventUploader == null) {
+                Logger.w(TAG, "事件上传器未注入，跳过上传")
+                return Result.success()
+            }
+
+            val success = eventUploader.upload(events)
 
             return if (success) {
                 // 上传成功，删除本地记录
@@ -142,28 +182,5 @@ class AnalyticsUploadWorker(
             Logger.e(TAG, "埋点上传任务异常", e)
             return Result.retry()
         }
-    }
-
-    /**
-     * 批量上传事件到服务端
-     *
-     * **业务层需实现此方法**，将事件发送到后端 API。
-     * 当前为占位实现，始终返回 true（模拟上传成功）。
-     *
-     * @param events 待上传的事件列表
-     * @return true=上传成功，false=上传失败
-     */
-    private suspend fun uploadEvents(events: List<PendingEventEntity>): Boolean {
-        // ========================================
-        // TODO: 实现实际的网络上传逻辑
-        // ========================================
-        // 示例：
-        // val json = events.map { it.toJson() }
-        // val response = apiService.uploadEvents(json)
-        // return response.isSuccessful
-
-        // 占位：模拟上传成功
-        Logger.d(TAG, "模拟上传 ${events.size} 条事件（占位实现）")
-        return true
     }
 }

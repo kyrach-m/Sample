@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
  *
  * 使用示例：
  * ```kotlin
- * class MyActivity : AppCompatActivity() {
+ * class MyActivity : ComponentActivity() {
  *
  *     // 创建权限委托
  *     private val permissionDelegate by lazy {
@@ -284,7 +284,7 @@ class PermissionDelegate(private val activity: ComponentActivity) : DefaultLifec
      * @return true=已授予，false=未授予
      */
     fun isPermissionGranted(permission: String): Boolean {
-        return permissionHelper.isPermissionGranted(activity, permission)
+        return PermissionUtil.hasPermission(activity, permission)
     }
 
     /**
@@ -294,7 +294,7 @@ class PermissionDelegate(private val activity: ComponentActivity) : DefaultLifec
      * @return true=全部已授予
      */
     fun isAllPermissionsGranted(vararg permissions: String): Boolean {
-        return permissionHelper.isAllPermissionsGranted(activity, *permissions)
+        return PermissionUtil.hasAllPermissions(activity, *permissions)
     }
 
     /**
