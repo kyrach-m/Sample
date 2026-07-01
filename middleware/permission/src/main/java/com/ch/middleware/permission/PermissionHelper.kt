@@ -2,14 +2,12 @@ package com.ch.middleware.permission
 
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
 import com.ch.core.common.logger.Logger
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
@@ -102,7 +100,7 @@ class PermissionHelper(private val activity: ComponentActivity) {
      */
     suspend fun requestPermission(permission: String): Boolean {
         // 检查是否已授予
-        if (isPermissionGranted(activity, permission)) {
+        if (PermissionUtil.hasPermission(activity, permission)) {
             Logger.d(TAG, "权限已授予: $permission")
             return true
         }
@@ -128,7 +126,7 @@ class PermissionHelper(private val activity: ComponentActivity) {
         val needRequestPermissions = mutableListOf<String>()
 
         for (permission in permissions) {
-            if (isPermissionGranted(activity, permission)) {
+            if (PermissionUtil.hasPermission(activity, permission)) {
                 grantedPermissions[permission] = true
             } else {
                 needRequestPermissions.add(permission)
@@ -269,7 +267,7 @@ class PermissionHelper(private val activity: ComponentActivity) {
         cancelButtonText: String = "取消"
     ): Boolean {
         // 已授予，直接返回
-        if (isPermissionGranted(activity, permission)) {
+        if (PermissionUtil.hasPermission(activity, permission)) {
             return true
         }
 
@@ -347,7 +345,7 @@ class PermissionHelper(private val activity: ComponentActivity) {
         cancelButtonText: String = "取消"
     ): Map<String, Boolean> {
         // 过滤出需要申请的权限
-        val needRequest = permissions.filter { !isPermissionGranted(activity, it) }
+        val needRequest = permissions.filter { !PermissionUtil.hasPermission(activity, it) }
         if (needRequest.isEmpty()) {
             return permissions.associateWith { true }
         }
@@ -363,7 +361,7 @@ class PermissionHelper(private val activity: ComponentActivity) {
             )
             if (!confirmed) {
                 return permissions.associateWith { perm ->
-                    isPermissionGranted(activity, perm)
+                    PermissionUtil.hasPermission(activity, perm)
                 }
             }
         }
@@ -478,30 +476,6 @@ class PermissionHelper(private val activity: ComponentActivity) {
         }
         activity.startActivity(intent)
         Logger.d(TAG, "已跳转到应用设置页")
-    }
-
-    /**
-     * 检查单个权限是否已授予
-     *
-     * @param context Context
-     * @param permission 权限名称
-     * @return true=已授予，false=未授予
-     */
-    fun isPermissionGranted(context: Context, permission: String): Boolean {
-        return ContextCompat.checkSelfPermission(
-            context, permission
-        ) == PackageManager.PERMISSION_GRANTED
-    }
-
-    /**
-     * 检查多个权限是否全部已授予
-     *
-     * @param context Context
-     * @param permissions 权限名称数组
-     * @return true=全部已授予，false=有未授予的权限
-     */
-    fun isAllPermissionsGranted(context: Context, vararg permissions: String): Boolean {
-        return permissions.all { isPermissionGranted(context, it) }
     }
 
     /**

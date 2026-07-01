@@ -66,17 +66,21 @@ interface RouteInterceptorV2 {
 /**
  * 路由信息载体
  *
- * 封装一次路由跳转的所有信息，包括目标路径、携带参数等。
+ * 封装一次路由跳转的所有信息，包括目标路径、携带参数、过渡动画等。
  * 在拦截器链中传递，每个拦截器可以读取或修改其中的数据。
  *
  * @property path 目标路由路径
  * @property extras 携带的参数（Bundle）
  * @property extrasMap 携带的参数（Map 形式，便于读取）
+ * @property enterAnim 进入动画资源 ID（0 表示无动画）
+ * @property exitAnim 退出动画资源 ID（0 表示无动画）
  */
 data class Postcard(
     val path: String,
     var extras: Bundle? = null,
-    val extrasMap: MutableMap<String, Any?> = mutableMapOf()
+    val extrasMap: MutableMap<String, Any?> = mutableMapOf(),
+    var enterAnim: Int = 0,
+    var exitAnim: Int = 0
 ) {
     /**
      * 添加字符串参数
@@ -115,6 +119,19 @@ data class Postcard(
         extrasMap[key] = value
         ensureBundle()
         extras?.putBoolean(key, value)
+        return this
+    }
+
+    /**
+     * 设置页面过渡动画
+     *
+     * @param enterAnim 进入动画资源 ID
+     * @param exitAnim 退出动画资源 ID
+     * @return this
+     */
+    fun withTransition(enterAnim: Int, exitAnim: Int): Postcard {
+        this.enterAnim = enterAnim
+        this.exitAnim = exitAnim
         return this
     }
 

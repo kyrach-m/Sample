@@ -8,11 +8,11 @@ package com.ch.middleware.router
  *
  * 使用示例：
  * ```kotlin
- * // 跳转到登录页
- * RouterHelper.navigate(RouterPath.Login.LOGIN)
- *
  * // 跳转到主页
  * RouterHelper.navigate(RouterPath.Main.MAIN)
+ *
+ * // 跳转到设置页
+ * RouterHelper.navigate(RouterPath.Settings.SETTINGS)
  * ```
  *
  * 路径命名规范：

@@ -51,6 +51,15 @@ class LoginInterceptor : RouteInterceptorV2 {
         private val requireLoginPaths = mutableSetOf<String>()
 
         /**
+         * 登录页路由路径
+         *
+         * 框架层不硬编码业务路径，必须由应用层通过 [setLoginPath] 配置。
+         * 若未配置，拦截后仅记录日志不跳转，避免框架依赖业务模块。
+         */
+        @Volatile
+        private var loginPath: String? = null
+
+        /**
          * 设置登录状态提供者
          *
          * 必须在 Application.onCreate 中调用，否则拦截器无法判断登录状态。
@@ -61,6 +70,26 @@ class LoginInterceptor : RouteInterceptorV2 {
             loginStateProvider = provider
             Logger.d(TAG, "LoginStateProvider 已设置: ${provider.javaClass.simpleName}")
         }
+
+        /**
+         * 设置登录页路由路径
+         *
+         * 框架层不硬编码业务路径，必须由应用层（如 features:login）配置。
+         * 应在 Application.onCreate 中调用。
+         *
+         * @param path 登录页路由路径（如 "/login/LoginActivity"）
+         */
+        fun setLoginPath(path: String) {
+            loginPath = path
+            Logger.d(TAG, "登录页路径已设置: $path")
+        }
+
+        /**
+         * 获取当前登录页路由路径
+         *
+         * @return 登录页路径，未配置时返回 null
+         */
+        fun getLoginPath(): String? = loginPath
 
         /**
          * 获取当前登录状态提供者
@@ -132,14 +161,18 @@ class LoginInterceptor : RouteInterceptorV2 {
             callback.onContinue(postcard)
         } else {
             // 未登录 → 中断跳转，重定向到登录页
-            Logger.d(TAG, "用户未登录，拦截跳转: $targetPath → 重定向到登录页")
             callback.onInterrupt("用户未登录，需要跳转到登录页")
 
             // 4. 跳转到登录页（skipInterceptors = true 避免无限递归）
-            // NOTE: 登录页路径需在业务模块中注册，此处使用默认路径
+            val path = loginPath
+            if (path == null) {
+                // 框架层不硬编码业务路径，应用层必须通过 setLoginPath() 配置
+                Logger.w(TAG, "loginPath 未配置，无法跳转登录页。请在 Application 中调用 LoginInterceptor.setLoginPath()")
+                return
+            }
             RouterHelper.navigateWithParams(
                 context = RouterHelper.appContext ?: return,
-                path = "/login/LoginActivity",
+                path = path,
                 params = android.os.Bundle().apply {
                     putString("redirect_path", targetPath)
                 },

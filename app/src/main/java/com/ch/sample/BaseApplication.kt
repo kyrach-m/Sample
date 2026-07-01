@@ -202,6 +202,8 @@ class BaseApplication : Application() {
                 return TokenManager.isLoggedIn()
             }
         })
+        // TODO: 创建 features:login 模块后配置登录页路径
+        // LoginInterceptor.setLoginPath("/login/LoginActivity")
         Logger.i(TAG, "路由模块初始化完成")
 
         // ========================================
