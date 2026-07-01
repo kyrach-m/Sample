@@ -39,6 +39,15 @@ data class CacheEntry<T>(
  * - 自动清理过期条目
  * - 线程安全
  *
+ * ## 与 MemoryCache 的区别
+ *
+ * | 对比项 | [MemoryCache] | ExpirableCache（本类） |
+ * |--------|----------------|--------------------------|
+ * | 过期机制 | 无（仅 LRU 淘汰 + GC 回收） | 支持 TTL 过期（精确到秒） |
+ * | 存储内容 | 任意 Any 对象 | CacheEntry 包装的对象 |
+ * | 主动清理 | 不支持 | 支持 [cleanExpired] 批量清理过期条目 |
+ * | 适用场景 | 频繁访问的热点数据（如图片缩略图、用户信息） | 有时效性的缓存（如接口响应、会话数据） |
+ *
  * 用法示例：
  * ```kotlin
  * // 存入缓存，有效期 5 分钟
@@ -53,6 +62,8 @@ data class CacheEntry<T>(
  * // 手动清理过期条目
  * ExpirableCache.cleanExpired()
  * ```
+ *
+ * @see MemoryCache 无过期机制的纯 LRU 缓存
  */
 object ExpirableCache {
 

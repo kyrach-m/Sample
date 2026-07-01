@@ -8,11 +8,19 @@ android {
 
     defaultConfig {
         minSdk = 24
-        buildConfigField("boolean", "DEBUG", "true")
     }
 
     buildFeatures {
         buildConfig = true
+    }
+
+    buildTypes {
+        debug {
+            buildConfigField("boolean", "DEBUG", "true")
+        }
+        release {
+            buildConfigField("boolean", "DEBUG", "false")
+        }
     }
 
     compileOptions {

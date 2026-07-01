@@ -14,6 +14,20 @@ import java.lang.ref.WeakReference
  * - WeakReference 包装：允许 GC 在内存紧张时回收缓存对象
  * - 线程安全：LruCache 内部已实现同步
  *
+ * ## 与 ExpirableCache 的区别
+ *
+ * | 对比项 | MemoryCache（本类） | [ExpirableCache] |
+ * |--------|---------------------|------------------|
+ * | 过期机制 | 无（仅 LRU 淘汰 + GC 回收） | 支持 TTL 过期（精确到秒） |
+ * | 存储内容 | 任意 Any 对象 | CacheEntry 包装的对象 |
+ * | 主动清理 | 不支持 | 支持 [ExpirableCache.cleanExpired] |
+ * | 适用场景 | 频繁访问的热点数据（如图片缩略图、用户信息） | 有时效性的缓存（如接口响应、会话数据） |
+ *
+ * ## 多级缓存架构
+ * - 一级：MemoryCache / ExpirableCache（内存 LRU，毫秒级）
+ * - 二级：KVStorage（磁盘 KV，毫秒级）
+ * - 三级：Room（磁盘数据库，毫秒级）
+ *
  * 用法示例：
  * ```kotlin
  * // 存入缓存
@@ -29,10 +43,7 @@ import java.lang.ref.WeakReference
  * MemoryCache.clear()
  * ```
  *
- * 双级缓存架构：
- * - 一级：MemoryCache（内存 LRU，毫秒级）
- * - 二级：KVStorage（磁盘 KV，毫秒级）
- * - 三级：Room（磁盘数据库，毫秒级）
+ * @see ExpirableCache 带 TTL 过期机制的缓存实现
  */
 object MemoryCache {
 
