@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ch.core.ui.component.GlobalButton
 import com.ch.core.ui.component.GlobalCard
-import com.ch.core.ui.theme.compose.ThemeSwitchDialog
+import com.ch.core.ui.theme.ThemeSwitchDialog
 import com.ch.core.ui.theme.ThemeManager
 
 /**

@@ -2,12 +2,8 @@ package com.ch.core.base
 
 import android.content.res.Configuration
 import android.os.Bundle
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
-import android.view.WindowInsets
-import android.view.WindowInsetsAnimation
-import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -26,9 +22,6 @@ import com.ch.core.base.event.ViewEvent
 import com.ch.core.base.window.WindowSizeClassifier
 import com.ch.core.common.util.BuildVersion
 import com.ch.core.ui.theme.ThemeManager
-import com.ch.core.ui.loading.LoadingMask
-import com.ch.core.ui.widget.dialog.GlobalDialog
-import com.ch.core.ui.widget.state.GlobalEmptyView
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,15 +49,6 @@ abstract class BaseActivity<
     private val _currentScreenType = MutableStateFlow(WindowSizeClassifier.WindowSizeClass.COMPACT)
 
     private var immersiveModeEnabled = false
-
-    // 全局加载遮罩
-    private var loadingMask: LoadingMask? = null
-
-    // 全局空状态视图
-    private var emptyView: GlobalEmptyView? = null
-
-    // 当前显示的对话框
-    private var currentDialog: GlobalDialog? = null
 
     protected abstract fun inflateBinding(inflater: LayoutInflater): VB
 
@@ -176,72 +160,6 @@ abstract class BaseActivity<
         }
     }
 
-    // ========================================
-    // 全局 UI 方法（业务层零感知调用）
-    // ========================================
-
-    /**
-     * 显示加载遮罩
-     *
-     * @param message 加载提示文字
-     */
-    protected fun showLoading(message: String = "加载中...") {
-        if (loadingMask == null) {
-            loadingMask = LoadingMask(this)
-            val decorView = window.decorView as FrameLayout
-            val lp = FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT
-            )
-            decorView.addView(loadingMask, lp)
-        }
-        loadingMask?.show(message)
-    }
-
-    /**
-     * 显示带进度的加载遮罩
-     *
-     * @param progress 进度值（0-100）
-     * @param message 加载提示文字（可选）
-     */
-    protected fun showLoadingWithProgress(progress: Int, message: String? = null) {
-        if (loadingMask == null) {
-            loadingMask = LoadingMask(this)
-            val decorView = window.decorView as FrameLayout
-            val lp = FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT
-            )
-            decorView.addView(loadingMask, lp)
-        }
-        loadingMask?.showWithProgress(progress, message)
-    }
-
-    /**
-     * 更新加载进度
-     *
-     * @param progress 进度值（0-100）
-     */
-    protected fun updateLoadingProgress(progress: Int) {
-        loadingMask?.updateProgress(progress)
-    }
-
-    /**
-     * 更新加载文案
-     *
-     * @param message 新的加载提示文字
-     */
-    protected fun setLoadingMessage(message: String) {
-        loadingMask?.setMessage(message)
-    }
-
-    /**
-     * 隐藏加载遮罩
-     */
-    protected fun hideLoading() {
-        loadingMask?.dismiss()
-    }
-
     /**
      * 显示 Toast
      *
@@ -260,111 +178,8 @@ abstract class BaseActivity<
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
-    /**
-     * 显示对话框
-     *
-     * @param builder GlobalDialog.Builder
-     */
-    protected fun showDialog(builder: GlobalDialog.Builder) {
-        currentDialog?.dismiss()
-        currentDialog = builder.show()
-    }
-
-    /**
-     * 显示确认对话框
-     *
-     * @param title 标题
-     * @param message 消息
-     * @param positiveText 确认按钮文字
-     * @param onPositive 确认回调
-     * @param negativeText 取消按钮文字（可选）
-     * @param onNegative 取消回调（可选）
-     */
-    protected fun showConfirmDialog(
-        title: String? = null,
-        message: String,
-        positiveText: String = "确定",
-        onPositive: () -> Unit,
-        negativeText: String? = "取消",
-        onNegative: (() -> Unit)? = null
-    ) {
-        currentDialog?.dismiss()
-        currentDialog = GlobalDialog.Builder(this)
-            .setTitle(title)
-            .setMessage(message)
-            .setPositiveButton(positiveText, onPositive)
-            .let { builder ->
-                if (negativeText != null) {
-                    builder.setNegativeButton(negativeText, onNegative)
-                } else {
-                    builder
-                }
-            }
-            .show()
-    }
-
-    /**
-     * 隐藏对话框
-     */
-    protected fun hideDialog() {
-        currentDialog?.dismiss()
-        currentDialog = null
-    }
-
-    /**
-     * 显示空状态视图
-     *
-     * @param type 空状态类型
-     * @param title 标题（可选）
-     * @param subtitle 副标题（可选）
-     * @param retryText 重试按钮文字（可选）
-     * @param onRetry 重试回调（可选）
-     */
-    protected fun showEmptyView(
-        type: GlobalEmptyView.EmptyType = GlobalEmptyView.EmptyType.EMPTY,
-        title: String? = null,
-        subtitle: String? = null,
-        retryText: String? = null,
-        onRetry: (() -> Unit)? = null
-    ) {
-        if (emptyView == null) {
-            emptyView = GlobalEmptyView(this)
-            val decorView = window.decorView as FrameLayout
-            val lp = FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT
-            )
-            lp.gravity = Gravity.CENTER
-            decorView.addView(emptyView, lp)
-        }
-        
-        when (type) {
-            GlobalEmptyView.EmptyType.EMPTY -> emptyView?.showEmpty(title, subtitle, retryText, onRetry)
-            GlobalEmptyView.EmptyType.ERROR -> emptyView?.showError(title, subtitle, retryText, onRetry)
-            GlobalEmptyView.EmptyType.NO_RESULT -> emptyView?.showNoResult(title, subtitle)
-        }
-    }
-
-    /**
-     * 隐藏空状态视图
-     */
-    protected fun hideEmptyView() {
-        emptyView?.hide()
-    }
-
     override fun onDestroy() {
         super.onDestroy()
-        // 清理全局视图
-        loadingMask?.let {
-            (window.decorView as FrameLayout).removeView(it)
-            loadingMask = null
-        }
-        emptyView?.let {
-            (window.decorView as FrameLayout).removeView(it)
-            emptyView = null
-        }
-        currentDialog?.dismiss()
-        currentDialog = null
     }
 }
 

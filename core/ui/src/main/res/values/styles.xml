@@ -34,37 +34,6 @@
         <item name="textAppearanceLabelSmall">@style/TextAppearance.Core.LabelSmall</item>
     </style>
 
-    <!-- ==================== 对话框样式 ==================== -->
-    <style name="CoreDialogStyle" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
-        <item name="shapeAppearanceOverlay">@style/CoreDialogShape</item>
-    </style>
-
-    <style name="CoreDialogShape">
-        <item name="cornerSize">@dimen/dialog_corner_radius</item>
-    </style>
-
-    <!-- 全局对话框样式 -->
-    <style name="GlobalDialogTheme" parent="Theme.AppCompat.Dialog">
-        <item name="android:windowBackground">@android:color/transparent</item>
-        <item name="android:windowNoTitle">true</item>
-        <item name="android:windowIsFloating">true</item>
-        <item name="android:backgroundDimAmount">0.5</item>
-    </style>
-
-    <!-- 底部弹出对话框样式 -->
-    <style name="CoreBottomSheetStyle" parent="ThemeOverlay.MaterialComponents.BottomSheetDialog">
-        <item name="bottomSheetStyle">@style/CoreBottomSheet</item>
-    </style>
-
-    <style name="CoreBottomSheet" parent="Widget.MaterialComponents.BottomSheet.Modal">
-        <item name="shapeAppearanceOverlay">@style/CoreBottomSheetShape</item>
-    </style>
-
-    <style name="CoreBottomSheetShape">
-        <item name="cornerSizeTopLeft">@dimen/radius_l</item>
-        <item name="cornerSizeTopRight">@dimen/radius_l</item>
-    </style>
-
     <!-- ==================== 全局文本样式（Design Tokens） ==================== -->
     <style name="TextAppearance.Core.HeadlineLarge" parent="TextAppearance.Material3.HeadlineLarge">
         <item name="android:textColor">?attr/colorOnSurface</item>
